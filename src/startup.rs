@@ -4,8 +4,9 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 use crate::api;
-use crate::api::state::{AppState, Repositories};
+use crate::api::state::{AppState, Crypto, Repositories};
 use crate::config::Config;
+use crate::infrastructure::crypto::argon2::Argon2Provider;
 use crate::infrastructure::repositories::identity::users::postgres::PostgresUserRepository;
 
 // The monolithic setup function
@@ -42,9 +43,14 @@ async fn build_state(pool: sqlx::PgPool, config: Config) -> AppState {
         user: Arc::new(PostgresUserRepository),
     };
 
+    let crypto = Crypto {
+        password_hasher: Arc::new(Argon2Provider::new()),
+    };
+
     // Build State
     AppState {
         repos,
+        crypto,
         pool,
         config: Arc::new(config),
     }
