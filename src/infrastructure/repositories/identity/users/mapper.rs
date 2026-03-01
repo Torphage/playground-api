@@ -25,7 +25,7 @@ use super::rows::{RoleRow, UserPermissionRow, UserRow};
 /// email format), the assembly will fail.
 ///
 /// # Arguments
-/// * `user_row` - The core record from the `auth.users` table.
+/// * `user_row` - The core record from the `identity.users` table.
 /// * `role_rows` - A collection of records representing the user's assigned roles.
 /// * `permission_rows` - A flattened collection of permission slugs the user holds.
 ///

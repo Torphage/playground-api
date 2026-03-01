@@ -1,8 +1,8 @@
 //! PostgreSQL implementation of the UserRepository with RBAC support.
 //!
 //! This module fulfills the storage contracts required by the authentication
-//! domain. It interacts with the `auth.users`, `auth.roles`, `auth.user_roles`,
-//! and `auth.role_permissions` tables, guaranteeing that the rich `User`
+//! domain. It interacts with the `identity.users`, `identity.roles`, `identity.user_roles`,
+//! and `identity.role_permissions` tables, guaranteeing that the rich `User`
 //! aggregate root is always persisted and reconstructed in a fully consistent state.
 
 use async_trait::async_trait;

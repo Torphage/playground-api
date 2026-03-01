@@ -13,7 +13,7 @@ use uuid::Uuid;
 // USER ROW
 // =========================================================================
 
-/// Represents a single record from the `auth.users` table.
+/// Represents a single record from the `identity.users` table.
 ///
 /// This struct is purely a data transfer object (DTO) for the database.
 /// It contains no business logic and uses raw primitive types.
@@ -47,14 +47,14 @@ impl fmt::Debug for UserRow {
 // RBAC ROWS
 // =========================================================================
 
-/// Represents a single record from the `auth.roles` table.
+/// Represents a single record from the `identity.roles` table.
 #[derive(Debug, FromRow)]
 pub struct RoleRow {
     pub id: String,
     pub name: String,
 }
 
-/// Represents a single record from the `auth.permissions` table.
+/// Represents a single record from the `identity.permissions` table.
 ///
 /// The description is optional in the database schema, hence the `Option<String>`.
 #[derive(Debug, FromRow)]
