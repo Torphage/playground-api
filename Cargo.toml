@@ -1,0 +1,82 @@
+[package]
+name = "playground-api"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# --- Core Async Runtime ---
+# The engine that runs your async code. 'full' enables all features (IO, Networking, Time).
+tokio = { version = "1.36", features = ["full"] }
+
+# --- Web Framework (API Layer) ---
+# axum: The web framework itself.
+# tower: The middleware stack standard.
+# tower-http: Official HTTP middleware (CORS, Tracing, Request ID).
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace", "cors", "request-id", "util"] }
+
+# --- Domain Layer ---
+chrono = { version = "0.4", features = ["serde"] }
+
+# --- Database (Infrastructure Layer) ---
+# sqlx: The Async SQL toolkit.
+# features:
+# - postgres: Enable Postgres driver
+# - runtime-tokio-native-tls: Use Tokio runtime and system TLS
+# - macros: Enable query! and query_as! macros
+# - uuid: Map SQL UUIDs to the Rust uuid crate
+# - offline: Enable offline verification (for CI without DB)
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "macros", "uuid", "chrono"] }
+
+# --- Serialization & Data (Domain/API Layer) ---
+# serde: The standard serialization framework.
+# serde_json: For parsing JSON requests and responses.
+# uuid: For unique IDs (v4 = random generation).
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.7", features = ["v4", "serde"] }
+
+# --- Configuration ---
+# config: Loads settings from files, env vars, etc.
+# dotenvy: Loads .env files during development.
+config = "0.15"
+dotenvy = "0.15"
+
+# --- Observability (Logging & Errors) ---
+# tracing: The instrumentation facade.
+# tracing-subscriber: The actual logger implementation (JSON support for Loki).
+# sentry: Error reporting (Bugsink).
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+sentry = { version = "0.46", features = ["tower", "tower-axum-matched-path", "tracing"] }
+sentry-tower = { version = "0.46", features = ["http"] }
+
+# --- Security (Infrastructure Layer) ---
+# argon2: Industry standard password hashing.
+# jsonwebtoken: For creating and verifying session tokens.
+argon2 = { version = "0.5", features = ["std"] }
+jsonwebtoken = "10.2"
+
+# --- Error Handling ---
+# thiserror: For defining custom Enum errors (DomainError, ApiError).
+# anyhow: For easy generic error handling (Internal Server Errors).
+thiserror = "2.0"
+anyhow = "1.0"
+
+# --- Utils ---
+# async-trait: Allows async functions inside Traits (needed for Ports).
+async-trait = "0.1"
+derive_more = "2.1.1"
+email_address = "0.2.9"
+redis = { version = "1.0.4", features = ["tokio-comp", "aio"] }
+
+
+[dev-dependencies]
+# --- Testing ---
+# mockall: Auto-generates mocks for our Traits.
+mockall = "0.14"
+# reqwest: Friendly HTTP client for integration tests.
+reqwest = { version = "0.13", features = ["json"] }    # For easy top-level error handling in main.rs
