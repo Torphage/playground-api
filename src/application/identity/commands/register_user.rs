@@ -40,7 +40,7 @@ impl RegisterUserCommand {
     /// 3. Securely hash the validated plaintext password.
     /// 4. Instantiate the `User` aggregate root.
     /// 5. Persist the new aggregate via the Unit of Work.
-    async fn execute(&self,
+    pub async fn execute(&self,
          _pool: &sqlx::PgPool,
          user_repo: &dyn UserRepository,
          password_hasher: &dyn PasswordHasher,

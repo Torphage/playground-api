@@ -9,9 +9,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::error::ApiError;
-use crate::application::command::{CommandHandler, UnitOfWork};
-use crate::application::state::AppState;
-use crate::application::use_cases::auth::register_user::RegisterUserCommand;
+use crate::api::state::AppState;
+use crate::application::identity::commands::register_user::RegisterUserCommand;
 
 // =========================================================================
 // DTOS (Data Transfer Objects)
@@ -56,21 +55,21 @@ impl From<RegisterRequest> for RegisterUserCommand {
 ///
 /// This function utilizes the `From` implementation to transform the payload
 /// before dispatching the command to the orchestrated handler.
-pub async fn handle(
+pub async fn handler(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<RegisterResponse>, ApiError> {
-    // 1. Map API DTO to Application Command using our From impl
+    // Map API DTO to Application Command using our From impl
     let command = RegisterUserCommand::from(payload);
 
-    // 2. Prepare the Unit of Work
-    // The UoW acts as the context for the duration of this request.
-    let mut uow = UnitOfWork::new();
-
-    // 3. Dispatch the command
+    // Dispatch the command
     // state.register_handler is wrapped in TransactionMiddleware, so this
     // call is automatically transactional.
-    let user_id = state.register_handler.handle(command, &mut uow).await?;
+    let user_id = command.execute(
+        &state.pool,
+        &state.repos.user,
+        &state.crypto.password_hasher,
+    ).await?;
 
     // 4. Return success
     Ok(Json(RegisterResponse {
