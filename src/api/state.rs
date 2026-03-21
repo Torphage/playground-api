@@ -1,31 +1,41 @@
-// api/state.rs
-use sqlx::PgPool;
-use std::sync::Arc;
-use crate::domain::identity::ports::{PasswordHasher, UserRepository};
-use crate::config::Config; // If your handlers need access to config
+//! Shared API state.
+//!
+//! This module holds the concrete dependencies assembled during application
+//! startup and injected into Axum handlers.
 
+use std::sync::Arc;
+
+use crate::config::Config;
+use crate::domain::identity::ports::PasswordHasher;
+use crate::infrastructure::db::postgres::PostgresTransactionManager;
+use crate::infrastructure::repositories::identity::users::postgres::PostgresUserRepository;
+
+/// Repository dependencies used by HTTP handlers.
 #[derive(Clone)]
 pub struct Repositories {
-    pub user: Arc<dyn UserRepository>,
+    /// Concrete PostgreSQL-backed user repository.
+    pub user: Arc<PostgresUserRepository>,
 }
 
+/// Cryptographic dependencies used by HTTP handlers.
 #[derive(Clone)]
 pub struct Crypto {
+    /// Password hashing provider.
     pub password_hasher: Arc<dyn PasswordHasher>,
 }
 
-// A struct to hold your fully assembled state
+/// The fully assembled shared application state.
 #[derive(Clone)]
 pub struct AppState {
-    // Repositories (wrapped in Arc for cheap cloning across threads)
+    /// Repository implementations.
     pub repos: Repositories,
 
-    // Cryptographic components
+    /// Transaction manager used by application use cases.
+    pub tx_manager: PostgresTransactionManager,
+
+    /// Cryptographic components.
     pub crypto: Crypto,
 
-    // Database connections
-    pub pool: PgPool,
-
-    // Read-only configuration (e.g., JWT secrets)
+    /// Read-only application configuration.
     pub config: Arc<Config>,
 }

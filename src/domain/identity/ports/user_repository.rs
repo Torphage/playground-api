@@ -1,40 +1,34 @@
-//! User Repository Port.
+//! User repository port.
 //!
-//! Defines the storage contracts for the User aggregate root. Implementations
-//! of this trait must guarantee that the aggregate is always saved and
-//! reconstructed in a consistent state.
+//! Defines the persistence contract for the `User` aggregate root.
+//! Implementations are responsible for storing and reconstructing a user in a
+//! consistent state, including any related authorization data required by the
+//! aggregate.
+//!
+//! The repository is generic over a transaction type so that the application
+//! layer can control transaction boundaries without leaking infrastructure
+//! concerns such as `sqlx` into this trait.
 
 use async_trait::async_trait;
-use sqlx;
+
 use crate::application::error::AppError;
 use crate::domain::identity::entities::user::User;
 use crate::domain::identity::values::email::Email;
 use crate::domain::identity::values::user_id::UserId;
 
-// =========================================================================
-// REPOSITORY PORT
-// =========================================================================
-
-/// The outbound port for User persistence.
+/// The outbound persistence port for the `User` aggregate.
 ///
-/// Notice that every method takes a `&mut UnitOfWork`. This enforces the
-/// architectural rule that the repository does not manage its own database
-/// connections; it borrows them from the active transaction context.
+/// The transaction is supplied by the application layer so that all repository
+/// calls participating in a single use case can share the same transactional
+/// boundary.
 #[async_trait]
-pub trait UserRepository: Send + Sync {
-    /// Persists a user (and their associated RBAC roles) to the data store.
-    ///
-    /// Returns an `AuthError` if a business constraint is violated at the
-    /// storage level, such as an email uniqueness conflict.
-    async fn save(&self, &mut sqlx::PgConnection, user: &User) -> Result<(), AppError>;
+pub trait UserRepository<Tx>: Send + Sync {
+    /// Persists a user aggregate and its related authorization state.
+    async fn save(&self, tx: &mut Tx, user: &User) -> Result<(), AppError>;
 
-    /// Retrieves a user by their unique Domain ID.
-    ///
-    /// Returns `Ok(None)` if no user matches the provided ID.
-    async fn find_by_id(&self, conn: &mut sqlx::PgConnection, id: &UserId) -> Result<Option<User>, AppError>;
+    /// Retrieves a user by domain identifier.
+    async fn find_by_id(&self, tx: &mut Tx, id: &UserId) -> Result<Option<User>, AppError>;
 
-    /// Retrieves a user by their strongly-typed Domain Email.
-    ///
-    /// This is primarily utilized during the authentication/login process.
-    async fn find_by_email(&self, conn: &mut sqlx::PgConnection, email: &Email) -> Result<Option<User>, AppError>;
+    /// Retrieves a user by email address.
+    async fn find_by_email(&self, tx: &mut Tx, email: &Email) -> Result<Option<User>, AppError>;
 }

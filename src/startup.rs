@@ -7,51 +7,51 @@ use crate::api;
 use crate::api::state::{AppState, Crypto, Repositories};
 use crate::config::Config;
 use crate::infrastructure::crypto::argon2::Argon2Provider;
+use crate::infrastructure::db::postgres::PostgresTransactionManager;
 use crate::infrastructure::repositories::identity::users::postgres::PostgresUserRepository;
 
-// The monolithic setup function
+/// Builds the application listener and router.
+///
+/// This function is the composition root of the service. It wires concrete
+/// infrastructure implementations into the HTTP layer.
 pub async fn build_application(config: Config) -> Result<(TcpListener, Router), String> {
-    // Setup Database Connection
     let pool = sqlx::PgPool::connect(&config.database.url)
         .await
-        .map_err(|e| format!("Failed to connect to Postgres: {}", e))?;
+        .map_err(|e| format!("Failed to connect to Postgres: {e}"))?;
 
-    // Run Migrations (Optional but recommended)
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
-        .map_err(|e| format!("Failed to migrate DB: {}", e))?;
+        .map_err(|e| format!("Failed to migrate DB: {e}"))?;
 
     let state = build_state(pool, config.clone()).await;
 
-    // Build the Router
     let router = api::router::create_router(state, config.cors);
 
-    // Bind the Listener
     let address = format!("{}:{}", config.server.host, config.server.port);
     let listener = TcpListener::bind(&address)
         .await
-        .map_err(|e| format!("Failed to bind to {}: {}", address, e))?;
+        .map_err(|e| format!("Failed to bind to {address}: {e}"))?;
 
     Ok((listener, router))
 }
 
-/// Initialize the application state
+/// Initializes the shared application state.
 async fn build_state(pool: sqlx::PgPool, config: Config) -> AppState {
-    // Instantiate Repositories
     let repos = Repositories {
-        user: Arc::new(PostgresUserRepository),
+        user: Arc::new(PostgresUserRepository::new()),
     };
 
     let crypto = Crypto {
         password_hasher: Arc::new(Argon2Provider::new()),
     };
 
-    // Build State
+    let tx_manager = PostgresTransactionManager::new(pool);
+
     AppState {
         repos,
+        tx_manager,
         crypto,
-        pool,
         config: Arc::new(config),
     }
 }

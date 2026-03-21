@@ -1,41 +1,45 @@
-//! PostgreSQL implementation of the UserRepository with RBAC support.
+//! PostgreSQL implementation of the `UserRepository` port.
 //!
-//! This module fulfills the storage contracts required by the authentication
-//! domain. It interacts with the `identity.users`, `identity.roles`, `identity.user_roles`,
-//! and `identity.role_permissions` tables, guaranteeing that the rich `User`
-//! aggregate root is always persisted and reconstructed in a fully consistent state.
+//! This module fulfills the storage contract for the `User` aggregate using
+//! PostgreSQL and SQLx. It is responsible for translating repository operations
+//! into concrete SQL queries while keeping those details isolated from the
+//! application and domain layers.
 
 use async_trait::async_trait;
+
 use crate::application::error::AppError;
 use crate::domain::identity::entities::user::User;
 use crate::domain::identity::ports::user_repository::UserRepository;
 use crate::domain::identity::values::email::Email;
 use crate::domain::identity::values::user_id::UserId;
+use crate::infrastructure::db::postgres::PostgresTransaction;
 
-use super::rows::{RoleRow, UserPermissionRow, UserRow};
 use super::mapper::assemble_user;
+use super::rows::{RoleRow, UserPermissionRow, UserRow};
 
 /// A PostgreSQL-backed repository for the `User` aggregate.
+#[derive(Default)]
 pub struct PostgresUserRepository;
 
 impl PostgresUserRepository {
+    /// Creates a new repository instance.
     pub fn new() -> Self {
         Self
     }
 }
 
 #[async_trait]
-impl UserRepository for PostgresUserRepository {
-    /// Persists a user and their assigned roles to the database.
+impl UserRepository<PostgresTransaction> for PostgresUserRepository {
+    /// Persists a user aggregate and synchronizes its assigned roles.
     ///
-    /// Because `User` is an aggregate root, saving it means synchronizing its
-    /// entire state. This method upserts the core user data and entirely
-    /// replaces their assigned roles in the junction table to match the
-    /// aggregate's current state in memory.
-    async fn save(&self, conn: &mut sqlx::PgConnection, user: &User) -> Result<(), AppError> {
+    /// Because `User` is treated as an aggregate root, saving it means
+    /// synchronizing the full persistence representation required by the
+    /// aggregate, including the user-role relationship table.
+    async fn save(&self, tx: &mut PostgresTransaction, user: &User) -> Result<(), AppError> {
         let user_uuid = user.id.as_uuid();
+        let conn = tx.connection_mut();
 
-        // 1. Upsert the core user record
+        // 1. Upsert the core user record.
         sqlx::query!(
             r#"
             INSERT INTO identity.users (id, email, password_hash, created_at, updated_at)
@@ -51,19 +55,18 @@ impl UserRepository for PostgresUserRepository {
             user.created_at,
             user.updated_at
         )
-            .execute(conn)
+            .execute(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to save user core: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to save user core: {e}")))?;
 
-        // 2. Synchronize Roles (Clear and Re-insert)
-        // This guarantees the database exactly matches the aggregate root.
+        // 2. Replace role assignments to match the aggregate's current state.
         sqlx::query!(
             r#"DELETE FROM identity.user_roles WHERE user_id = $1"#,
             user_uuid
         )
-            .execute(conn)
+            .execute(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to clear user roles: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to clear user roles: {e}")))?;
 
         for role in &user.roles {
             sqlx::query!(
@@ -74,34 +77,39 @@ impl UserRepository for PostgresUserRepository {
                 user_uuid,
                 role.id
             )
-                .execute(conn)
+                .execute(&mut **conn)
                 .await
-                .map_err(|e| AppError::Infrastructure(format!("Failed to insert user role: {}", e)))?;
+                .map_err(|e| AppError::Infrastructure(format!("Failed to insert user role: {e}")))?;
         }
 
         Ok(())
     }
 
-    /// Retrieves a user by their unique identifier, fully loaded with RBAC data.
-    async fn find_by_id(&self, conn: &mut sqlx::PgConnection, id: &UserId) -> Result<Option<User>, AppError> {
+    /// Retrieves a fully assembled user by identifier.
+    async fn find_by_id(
+        &self,
+        tx: &mut PostgresTransaction,
+        id: &UserId,
+    ) -> Result<Option<User>, AppError> {
         let user_uuid = id.as_uuid();
+        let conn = tx.connection_mut();
 
-        // 1. Fetch the core user
+        // 1. Fetch the core user row.
         let user_row = sqlx::query_as!(
             UserRow,
             r#"SELECT id, email, password_hash, created_at, updated_at FROM identity.users WHERE id = $1"#,
             user_uuid
         )
-            .fetch_optional(conn)
+            .fetch_optional(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Query failed: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
 
         let user_row = match user_row {
             Some(row) => row,
             None => return Ok(None),
         };
 
-        // 2. Fetch assigned roles
+        // 2. Fetch assigned roles.
         let role_rows = sqlx::query_as!(
             RoleRow,
             r#"
@@ -112,11 +120,11 @@ impl UserRepository for PostgresUserRepository {
             "#,
             user_uuid
         )
-            .fetch_all(conn)
+            .fetch_all(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
 
-        // 3. Fetch flattened permissions via JOIN
+        // 3. Fetch flattened permissions granted through roles.
         let permission_rows = sqlx::query_as!(
             UserPermissionRow,
             r#"
@@ -127,26 +135,32 @@ impl UserRepository for PostgresUserRepository {
             "#,
             user_uuid
         )
-            .fetch_all(conn)
+            .fetch_all(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
 
-        // 4. Hand off the raw rows to the assembler
+        // 4. Reconstruct the aggregate.
         let user = assemble_user(user_row, role_rows, permission_rows)?;
         Ok(Some(user))
     }
 
-    /// Retrieves a user by their email address, fully loaded with RBAC data.
-    async fn find_by_email(&self, conn: &mut sqlx::PgConnection, email: &Email) -> Result<Option<User>, AppError> {
-        // 1. Fetch the core user to get their UUID
+    /// Retrieves a fully assembled user by email address.
+    async fn find_by_email(
+        &self,
+        tx: &mut PostgresTransaction,
+        email: &Email,
+    ) -> Result<Option<User>, AppError> {
+        let conn = tx.connection_mut();
+
+        // Fetch the core user row.
         let user_row = sqlx::query_as!(
             UserRow,
             r#"SELECT id, email, password_hash, created_at, updated_at FROM identity.users WHERE email = $1"#,
             email.as_str()
         )
-            .fetch_optional(conn)
+            .fetch_optional(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Query failed: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
 
         let user_row = match user_row {
             Some(row) => row,
@@ -155,7 +169,7 @@ impl UserRepository for PostgresUserRepository {
 
         let user_uuid = user_row.id;
 
-        // 2. Fetch assigned roles
+        // Fetch assigned roles.
         let role_rows = sqlx::query_as!(
             RoleRow,
             r#"
@@ -166,11 +180,11 @@ impl UserRepository for PostgresUserRepository {
             "#,
             user_uuid
         )
-            .fetch_all(conn)
+            .fetch_all(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
 
-        // 3. Fetch flattened permissions
+        // Fetch flattened permissions.
         let permission_rows = sqlx::query_as!(
             UserPermissionRow,
             r#"
@@ -181,11 +195,11 @@ impl UserRepository for PostgresUserRepository {
             "#,
             user_uuid
         )
-            .fetch_all(conn)
+            .fetch_all(&mut **conn)
             .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {}", e)))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
 
-        // 4. Assemble and return
+        // Reconstruct and return the aggregate.
         let user = assemble_user(user_row, role_rows, permission_rows)?;
         Ok(Some(user))
     }
