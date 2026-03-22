@@ -69,7 +69,7 @@ anyhow = "1.0"
 # --- Utils ---
 # async-trait: Allows async functions inside Traits (needed for Ports).
 async-trait = "0.1"
-derive_more = "2.1.1"
+derive_more = { version = "2.1.1", features = ["display", "as_ref"] }
 email_address = "0.2.9"
 redis = { version = "1.0.4", features = ["tokio-comp", "aio"] }
 
