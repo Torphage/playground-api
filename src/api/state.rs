@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use crate::config::Config;
+use crate::config::AppConfig;
 use crate::infrastructure::crypto::Argon2Provider;
 use crate::infrastructure::db::PostgresTransactionManager;
 use crate::infrastructure::repositories::identity::PostgresUserRepository;
