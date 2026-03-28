@@ -2,8 +2,7 @@
 //!
 //! Defines the persistence contract for the `User` aggregate root.
 //! Implementations are responsible for storing and reconstructing a user in a
-//! consistent state, including any related authorization data required by the
-//! aggregate.
+//! consistent state, including related authorization data.
 //!
 //! The repository is generic over a transaction type so that the application
 //! layer can control transaction boundaries without leaking infrastructure
@@ -18,10 +17,6 @@ use crate::domain::identity::{
 };
 
 /// The outbound persistence port for the `User` aggregate.
-///
-/// The transaction is supplied by the application layer so that all repository
-/// calls participating in a single use case can share the same transactional
-/// boundary.
 #[async_trait]
 pub trait UserRepository<Tx>: Send + Sync {
     /// Persists a user aggregate and its related authorization state.
