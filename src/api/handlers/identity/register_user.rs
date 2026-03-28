@@ -4,7 +4,7 @@
 //! JSON extraction, maps the API DTO to an application command, and formats
 //! the successful response.
 
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

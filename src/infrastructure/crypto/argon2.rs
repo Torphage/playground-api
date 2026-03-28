@@ -5,9 +5,6 @@
 //! and verify passwords, offloading the CPU-intensive work to a blocking
 //! thread pool to prevent async runtime starvation.
 
-use crate::domain::identity::error::IdentityError;
-use crate::domain::identity::ports::PasswordHasher;
-use crate::domain::identity::values::password::{PasswordHash, PlaintextPassword};
 use argon2::{
     Argon2,
     password_hash::{
@@ -16,6 +13,12 @@ use argon2::{
     },
 };
 use async_trait::async_trait;
+
+use crate::domain::identity::{
+    IdentityError,
+    ports::PasswordHasher,
+    values::{PasswordHash, PlaintextPassword},
+};
 
 /// A concrete password hasher utilizing the Argon2id algorithm.
 ///
