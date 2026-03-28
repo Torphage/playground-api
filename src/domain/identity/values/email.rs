@@ -32,8 +32,8 @@ impl ErrorCode for EmailError {
     /// Maps validation failures to localized frontend slugs.
     fn error_code(&self) -> &'static str {
         match self {
-            Self::InvalidFormat => "AUTH_EMAIL_INVALID_FORMAT",
-            Self::BlockedDomain => "AUTH_EMAIL_BLOCKED_DOMAIN",
+            Self::InvalidFormat => "IDENTITY_EMAIL_INVALID_FORMAT",
+            Self::BlockedDomain => "IDENTITY_EMAIL_BLOCKED_DOMAIN",
         }
     }
 }
@@ -65,7 +65,8 @@ impl TryFrom<String> for Email {
         // Delegate to a robust, RFC-compliant parser
         if email_address::EmailAddress::is_valid(&sanitized) {
             // Placeholder for business logic: rejecting disposable domains
-            if sanitized.ends_with("@tempmail.com") {  // TODO
+            if sanitized.ends_with("@tempmail.com") {
+                // TODO
                 return Err(EmailError::BlockedDomain);
             }
             Ok(Self(sanitized))

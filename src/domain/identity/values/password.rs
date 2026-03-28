@@ -4,13 +4,14 @@
 //! separates unhashed input (`PlaintextPassword`) from secure storage
 //! (`PasswordHash`) to eliminate the risk of storing cleartext passwords.
 
-use std::fmt;
-use std::convert::TryFrom;
-use std::str::FromStr;
 use serde::Deserialize;
+use serde_json::{Value, json};
+use std::convert::TryFrom;
+use std::fmt;
+use std::str::FromStr;
 use thiserror::Error;
-use serde_json::{json, Value};
-use crate::domain::shared::error::ErrorCode;
+
+use crate::domain::shared::ErrorCode;
 
 // =========================================================================
 // ERRORS
@@ -42,13 +43,13 @@ impl ErrorCode for PasswordError {
     /// Maps validation failures to localized frontend slugs.
     fn error_code(&self) -> &'static str {
         match self {
-            Self::Empty => "AUTH_PASSWORD_EMPTY",
-            Self::TooShort(_) => "AUTH_PASSWORD_TOO_SHORT",
-            Self::TooLong => "AUTH_PASSWORD_TOO_LONG",
-            Self::MissingLowercase => "AUTH_PASSWORD_MISSING_LOWERCASE",
-            Self::MissingUppercase => "AUTH_PASSWORD_MISSING_UPPERCASE",
-            Self::MissingNumber => "AUTH_PASSWORD_MISSING_NUMBER",
-            Self::MissingSymbol => "AUTH_PASSWORD_MISSING_SYMBOL",
+            Self::Empty => "IDENTITY_PASSWORD_EMPTY",
+            Self::TooShort(_) => "IDENTITY_PASSWORD_TOO_SHORT",
+            Self::TooLong => "IDENTITY_PASSWORD_TOO_LONG",
+            Self::MissingLowercase => "IDENTITY_PASSWORD_MISSING_LOWERCASE",
+            Self::MissingUppercase => "IDENTITY_PASSWORD_MISSING_UPPERCASE",
+            Self::MissingNumber => "IDENTITY_PASSWORD_MISSING_NUMBER",
+            Self::MissingSymbol => "IDENTITY_PASSWORD_MISSING_SYMBOL",
         }
     }
 
