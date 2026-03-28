@@ -1,65 +1,64 @@
-use tracing_subscriber::{
-    layer::SubscriberExt,
-    reload,
-    util::SubscriberInitExt,
-    EnvFilter, Registry
-};
+//! Observability and logging initialization.
+//!
+//! This module configures a multi-layered tracing subscriber:
+//! 1. A JSON formatting layer for standard output (scraped by Alloy/Loki).
+//! 2. An optional OpenTelemetry (OTLP) layer for distributed tracing (sent to Tempo).
 
-/// Handle allowing the app to adjust log filtering at runtime.
-///
-/// We *only* reload the filter (verbosity), not the formatting/output.
-/// That keeps the logging pipeline stable and production-friendly.
-pub type LogReloadHandle = reload::Handle<EnvFilter, Registry>;
+use opentelemetry::global;
+use opentelemetry_otlp::SpanExporter;
+use opentelemetry_sdk::{Resource, trace::SdkTracerProvider};
+use tracing_subscriber::{EnvFilter, Registry, layer::SubscriberExt, util::SubscriberInitExt};
 
-/// Initialize telemetry **before configuration is loaded**.
+/// Configures global tracing subscribers and optional OpenTelemetry exporters.
 ///
-/// Production-friendly defaults:
-/// - Logs go to stderr (container/systemd friendly)
-/// - JSON formatting (Loki/ELK friendly)
-/// - Default filter = `info` unless `RUST_LOG` is set
-///
-/// Returns a reload handle that can be used after config is loaded to adjust
-/// verbosity without rebuilding the entire subscriber.
-pub fn init_subscriber(default_filter: &str) -> LogReloadHandle {
-    // Filtering: prefer RUST_LOG, otherwise use a safe default.
+/// If OTEL_EXPORTER_OTLP_ENDPOINT is present in the environment, it initializes
+/// a gRPC OTLP pipeline for distributed tracing.
+pub fn init_subscriber() {
+    // Determine log verbosity from RUST_LOG or LOG_LEVEL environment variables.
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(default_filter));
+        .or_else(|_| {
+            EnvFilter::try_new(std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info".into()))
+        })
+        .unwrap();
 
-    // Wrap the filter in a reloadable layer so we can update it later.
-    let (filter_layer, handle) = reload::Layer::new(filter);
+    // Standard JSON formatter. 'flatten_event' ensures fields are at the root
+    // of the JSON object, which simplifies LogQL queries in Grafana/Loki.
+    let formatting_layer = tracing_subscriber::fmt::layer().json().flatten_event(true);
 
-    // Formatting: we use JSON formatting. This is what Loki LOVES.
-    // It includes timestamp, level, and all attached fields automatically.
-    let formatting_layer = tracing_subscriber::fmt::layer()
-        .json()
-        .flatten_event(true); // Makes the JSON flatter and easier to query
+    // Build the optional OpenTelemetry layer if an endpoint is provided.
+    let telemetry_layer = if std::env::var("OTEL_EXPORTER_OTLP_ENDPOINT").is_ok() {
+        // Initialize the OTLP exporter using the tonic (gRPC) runtime.
+        let exporter = SpanExporter::builder()
+            .with_tonic()
+            .build()
+            .expect("Failed to create OTLP span exporter");
 
-    // Install global subscriber.
-    tracing_subscriber::registry()
-        .with(filter_layer)
+        // Create a resource describing the application.
+        let resource = Resource::builder()
+            .with_service_name("playground-api")
+            .build();
+
+        // Create the provider which manages the span lifecycle and batching.
+        let provider = SdkTracerProvider::builder()
+            .with_batch_exporter(exporter)
+            .with_resource(resource)
+            .build();
+
+        // Set this provider as the global default for the application.
+        global::set_tracer_provider(provider.clone());
+
+        // Create a tracer specifically for our application boundary.
+        let tracer = global::tracer("playground-api");
+
+        Some(tracing_opentelemetry::layer().with_tracer(tracer))
+    } else {
+        None
+    };
+
+    // Initialize the global tracing registry with our composed layers.
+    Registry::default()
+        .with(filter)
         .with(formatting_layer)
+        .with(telemetry_layer)
         .init();
-
-    handle
-}
-
-/// Reload the log filter (verbosity) after configuration is loaded.
-///
-/// Behavior:
-/// - If `RUST_LOG` is set, we do **not** override it (ops-friendly).
-/// - Otherwise, we apply `new_filter` (e.g. `"debug"`, `"info,my_crate=trace"`, etc).
-pub fn reload_filter(handle: &LogReloadHandle, new_filter: &str) {
-    // Filtering: prefer RUST_LOG, otherwise use value from config.
-    if std::env::var_os(EnvFilter::DEFAULT_ENV).is_some() {
-        tracing::debug!("RUST_LOG is set; skipping config-based log filter reload");
-        return;
-    }
-
-    // EnvFilter accepts full directive syntax (e.g. "info,tower_http=debug").
-    let filter = EnvFilter::new(new_filter);
-
-    if let Err(err) = handle.reload(filter) {
-        // Reload failures shouldn't crash the service. Log and continue.
-        tracing::warn!(error = %err, "Failed to reload log filter; keeping previous filter");
-    }
 }
