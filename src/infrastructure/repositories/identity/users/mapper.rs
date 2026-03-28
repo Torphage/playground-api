@@ -39,8 +39,21 @@ pub fn assemble_user(
 
     // 2. Parse and validate the email
     // If this fails, our database contains a corrupted email string.
+    let username = Username::try_from(user_row.username).map_err(|e| {
+        tracing::error!(
+            "Data corruption: Invalid username in database for user {}: {:?}",
+            user_row.id,
+            e
+        );
+        AppError::Infrastructure("Database contains corrupted username data".into())
+    })?;
+
     let email = Email::try_from(user_row.email).map_err(|e| {
-        tracing::error!("Data corruption: Invalid email in database for user {}: {:?}", user_row.id, e);
+        tracing::error!(
+            "Data corruption: Invalid email in database for user {}: {:?}",
+            user_row.id,
+            e
+        );
         AppError::Infrastructure("Database contains corrupted email data".into())
     })?;
 
@@ -60,6 +73,7 @@ pub fn assemble_user(
     // 5. Reconstruct the aggregate root
     Ok(User::restore(
         id,
+        username,
         email,
         password_hash,
         roles,
