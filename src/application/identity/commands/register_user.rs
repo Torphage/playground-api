@@ -41,7 +41,7 @@ impl RegisterUserCommand {
     ) -> Result<UserId, AppError>
     where
         TM: TransactionManager,
-        UR: UserRepository<TM::Tx>,
+        for<'a> UR: UserRepository<TM::Tx<'a>>,
         PH: PasswordHasher + ?Sized,
     {
         let username = Username::try_from(self.username).map_err(IdentityError::from)?;
