@@ -5,15 +5,15 @@
 //! It assigns appropriate HTTP status codes and formats the standardized
 //! JSON error envelope expected by the frontend for localization.
 
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    Json,
-};
-use serde_json::json;
 use crate::application::error::AppError;
 use crate::domain::identity::error::IdentityError;
 use crate::domain::shared::error::ErrorCode;
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
+use serde_json::json;
 
 /// A wrapper around `AppError` that implements Axum's `IntoResponse`.
 ///
@@ -46,6 +46,7 @@ impl ApiError {
                 // Value object validations (like Email format) are inherently bad requests
                 IdentityError::PasswordValidation(_) => StatusCode::BAD_REQUEST,
                 IdentityError::EmailValidation(_) => StatusCode::BAD_REQUEST,
+                IdentityError::UsernameValidation(_) => StatusCode::BAD_REQUEST,
             },
 
             // Global Application Mapping
