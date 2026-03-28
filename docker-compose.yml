@@ -2,38 +2,31 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:18-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.db
     restart: unless-stopped
-    # Compose dynamically injects these from your .env file
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    # Expose to localhost for local Cargo builds and SQLx macro verification
     ports:
       - "5432:5432"
+    command: -c config_file=/etc/postgresql.conf
     volumes:
+      - ./postgresql.dev.conf:/etc/postgresql.conf:ro
       - pgdata:/var/lib/postgresql
 
   cache:
     image: redis:8-alpine
     restart: unless-stopped
+    # Expose to localhost for local testing
     ports:
       - "6379:6379"
     volumes:
       - redisdata:/data
-
-  api:
-    build: .
-    restart: unless-stopped
-    # This tells Docker to load all variables from the .env file
-    # directly into the Rust application's environment.
-    env_file:
-      - .env
-    ports:
-      - "${PORT:-3000}:${PORT:-3000}"
-    depends_on:
-      - db
-      - cache
 
 volumes:
   pgdata:

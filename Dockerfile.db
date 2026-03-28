@@ -1,0 +1,8 @@
+FROM postgres:18-bookworm
+
+# Install the pgAudit extension package
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    postgresql-18-pgaudit && \
+    postgresql-18-pg-stat-adju
+    rm -rf /var/lib/apt/lists/*

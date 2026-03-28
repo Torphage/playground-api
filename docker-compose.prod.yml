@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # The API container only exists in production
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - cache
+    # In production, the API connects to the DB via Docker's internal network,
+    # so we override the DATABASE_URL to point to the 'db' service name instead of localhost.
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+  # Optional best-practice: Close off the DB and Cache from the outside world in production.
+  # They will only be accessible to the 'api' container on the internal Docker network.
+  db:
+    volumes:
+      - ./postgresql.prod.conf:/etc/postgresql.conf:ro
+    ports: !reset []
+
+  cache:
+    ports: !reset []
