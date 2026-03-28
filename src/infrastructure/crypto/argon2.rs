@@ -5,20 +5,17 @@
 //! and verify passwords, offloading the CPU-intensive work to a blocking
 //! thread pool to prevent async runtime starvation.
 
-use async_trait::async_trait;
-use argon2::{
-    password_hash::{
-        rand_core::OsRng,
-        PasswordHash as Argon2Hash,
-        PasswordHasher as Argon2HasherTrait,
-        PasswordVerifier,
-        SaltString,
-    },
-    Argon2,
-};
 use crate::domain::identity::error::IdentityError;
 use crate::domain::identity::ports::PasswordHasher;
 use crate::domain::identity::values::password::{PasswordHash, PlaintextPassword};
+use argon2::{
+    Argon2,
+    password_hash::{
+        PasswordHash as Argon2Hash, PasswordHasher as Argon2HasherTrait, PasswordVerifier,
+        SaltString, rand_core::OsRng,
+    },
+};
+use async_trait::async_trait;
 
 /// A concrete password hasher utilizing the Argon2id algorithm.
 ///
@@ -51,22 +48,26 @@ impl PasswordHasher for Argon2Provider {
                 .hash_password(pass_str.as_bytes(), &salt)
                 .map(|hash| hash.to_string())
         })
-            .await
-            .map_err(|_| {
-                tracing::error!("Tokio blocking task panicked during password hashing");
-                // If the thread panics, we fail secure and deny the operation
-                IdentityError::InvalidCredentials
-            })?
-            .map_err(|e| {
-                tracing::error!("Argon2 hashing failed internally: {}", e);
-                IdentityError::InvalidCredentials
-            })?;
+        .await
+        .map_err(|_| {
+            tracing::error!("Tokio blocking task panicked during password hashing");
+            // If the thread panics, we fail secure and deny the operation
+            IdentityError::InvalidCredentials
+        })?
+        .map_err(|e| {
+            tracing::error!("Argon2 hashing failed internally: {}", e);
+            IdentityError::InvalidCredentials
+        })?;
 
         Ok(PasswordHash::new(hash_result))
     }
 
     /// Verifies a plaintext password against an existing secure hash.
-    async fn verify(&self, password: &PlaintextPassword, hash: &PasswordHash) -> Result<bool, IdentityError> {
+    async fn verify(
+        &self,
+        password: &PlaintextPassword,
+        hash: &PasswordHash,
+    ) -> Result<bool, IdentityError> {
         let pass_str = password.as_str().to_owned();
         let hash_str = hash.as_str().to_owned();
 
@@ -85,11 +86,11 @@ impl PasswordHasher for Argon2Provider {
                 .verify_password(pass_str.as_bytes(), &parsed_hash)
                 .is_ok()
         })
-            .await
-            .map_err(|_| {
-                tracing::error!("Tokio blocking task panicked during password verification");
-                IdentityError::InvalidCredentials
-            })?;
+        .await
+        .map_err(|_| {
+            tracing::error!("Tokio blocking task panicked during password verification");
+            IdentityError::InvalidCredentials
+        })?;
 
         // We return Ok(is_valid) rather than an error on a mismatch,
         // because a wrong password is an expected business outcome, not a system failure.

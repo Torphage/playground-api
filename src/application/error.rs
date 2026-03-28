@@ -4,10 +4,10 @@
 //! boundary for the entire application. It aggregates domain-specific business
 //! errors and technical infrastructure failures into a single enum.
 
-use thiserror::Error;
-use serde_json::{json, Value};
-use crate::domain::shared::error::ErrorCode;
 use crate::domain::identity::error::IdentityError;
+use crate::domain::shared::error::ErrorCode;
+use serde_json::{Value, json};
+use thiserror::Error;
 
 /// The global error type for the application workflow.
 ///

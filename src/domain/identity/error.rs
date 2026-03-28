@@ -6,6 +6,9 @@ use crate::domain::shared::error::ErrorCode;
 use crate::domain::identity::values::email::EmailError;
 use crate::domain::identity::values::password::PasswordError;
 use crate::domain::identity::values::username::UsernameError;
+use crate::domain::shared::error::ErrorCode;
+use serde_json::Value;
+use thiserror::Error;
 
 /// Represents a business rule violation within the Authentication domain.
 #[derive(Error, Debug, PartialEq, Eq)]

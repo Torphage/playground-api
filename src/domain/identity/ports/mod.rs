@@ -1,5 +1,5 @@
-pub mod user_repository;
 mod password_hasher;
+mod user_repository;
 
-pub use user_repository::UserRepository;
 pub use password_hasher::PasswordHasher;
+pub use user_repository::UserRepository;

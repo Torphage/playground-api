@@ -5,13 +5,13 @@
 //! libraries for strict RFC compliance and masks Personally Identifiable
 //! Information (PII) during logging.
 
+use crate::domain::shared::error::ErrorCode;
+use derive_more::{AsRef, Display};
+use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fmt;
 use std::str::FromStr;
 use thiserror::Error;
-use serde::{Serialize, Deserialize};
-use derive_more::{Display, AsRef};
-use crate::domain::shared::error::ErrorCode;
 
 // =========================================================================
 // ERRORS

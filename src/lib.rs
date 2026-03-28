@@ -1,7 +1,7 @@
-pub mod config;
-pub mod startup;
 pub mod api;
 pub mod application;
-pub mod infrastructure;
+pub mod config;
 pub mod domain;
+pub mod infrastructure;
+pub mod startup;
 pub mod telemetry;

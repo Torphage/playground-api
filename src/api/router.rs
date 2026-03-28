@@ -1,10 +1,10 @@
-use axum::Router;
-use sentry_tower::NewSentryLayer;
-use tower_http::{trace::TraceLayer, cors::CorsLayer};
-use axum::http::{Method, HeaderValue};
-use crate::api::handlers::identity;
+use crate::api::handlers::identity_routes;
 use crate::api::state::AppState;
 use crate::config::CorsConfig;
+use axum::Router;
+use axum::http::{HeaderValue, Method};
+use sentry_tower::NewSentryLayer;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 pub fn create_router(state: AppState, cors_settings: CorsConfig) -> Router {
 

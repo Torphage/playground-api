@@ -2,8 +2,8 @@
 //!
 //! Represents a granular access right within the system (e.g., "kitchen.recipe.create").
 
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// A strongly-typed permission slug.
 ///

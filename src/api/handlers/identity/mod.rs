@@ -1,2 +1,2 @@
-pub mod routes;
 pub mod register_user;
+pub mod routes;

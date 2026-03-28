@@ -3,8 +3,8 @@
 //! Represents a collection of permissions grouped under a specific
 //! job function or access tier (e.g., "admin", "editor").
 
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// A strictly defined user role.
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]

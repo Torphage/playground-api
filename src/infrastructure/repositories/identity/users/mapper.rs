@@ -8,15 +8,14 @@
 use std::collections::HashSet;
 use std::convert::TryFrom;
 
+use super::rows::{RoleRow, UserPermissionRow, UserRow};
 use crate::application::error::AppError;
 use crate::domain::identity::entities::user::User;
 use crate::domain::identity::values::email::Email;
 use crate::domain::identity::values::password::PasswordHash;
-use crate::domain::identity::values::user_id::UserId;
-use crate::domain::identity::values::role::Role;
 use crate::domain::identity::values::permission::Permission;
-
-use super::rows::{RoleRow, UserPermissionRow, UserRow};
+use crate::domain::identity::values::role::Role;
+use crate::domain::identity::values::user_id::UserId;
 
 /// Assembles a complete `User` domain aggregate from its constituent database rows.
 ///

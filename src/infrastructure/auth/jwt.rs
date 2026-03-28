@@ -1,7 +1,7 @@
 //! JSON Web Token (JWT) infrastructure adapter.
 
 use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
 
 use crate::application::error::AppError;
@@ -64,11 +64,10 @@ impl TokenGenerator for JwtProvider {
         };
 
         // Encode and sign the token
-        let token = encode(&Header::default(), &claims, &self.encoding_key)
-            .map_err(|e| {
-                tracing::error!("Failed to generate JWT: {}", e);
-                AppError::Infrastructure("Failed to sign authentication token".into())
-            })?;
+        let token = encode(&Header::default(), &claims, &self.encoding_key).map_err(|e| {
+            tracing::error!("Failed to generate JWT: {}", e);
+            AppError::Infrastructure("Failed to sign authentication token".into())
+        })?;
 
         Ok(token)
     }
