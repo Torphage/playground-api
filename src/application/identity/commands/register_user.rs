@@ -6,13 +6,12 @@
 
 use crate::application::error::AppError;
 use crate::application::ports::{Transaction, TransactionManager};
-use crate::domain::identity::entities::user::User;
-use crate::domain::identity::error::IdentityError;
-use crate::domain::identity::ports::PasswordHasher;
-use crate::domain::identity::ports::UserRepository;
-use crate::domain::identity::values::email::Email;
-use crate::domain::identity::values::password::PlaintextPassword;
-use crate::domain::identity::values::user_id::UserId;
+use crate::domain::identity::{
+    IdentityError,
+    entities::User,
+    ports::{PasswordHasher, UserRepository},
+    values::{Email, PlaintextPassword, UserId, Username},
+};
 
 /// The intent to register a new user in the system.
 ///
@@ -20,6 +19,7 @@ use crate::domain::identity::values::user_id::UserId;
 /// during execution so that domain value objects are constructed inside the
 /// use-case workflow.
 pub struct RegisterUserCommand {
+    pub username: String,
     pub email: String,
     pub password: String,
 }
@@ -44,6 +44,7 @@ impl RegisterUserCommand {
         UR: UserRepository<TM::Tx>,
         PH: PasswordHasher + ?Sized,
     {
+        let username = Username::try_from(self.username).map_err(IdentityError::from)?;
         let email = Email::try_from(self.email).map_err(IdentityError::from)?;
         let password = PlaintextPassword::try_from(self.password).map_err(IdentityError::from)?;
 
@@ -55,7 +56,7 @@ impl RegisterUserCommand {
         }
 
         let password_hash = password_hasher.hash(&password).await?;
-        let user = User::create(email, password_hash);
+        let user = User::create(username, email, password_hash);
         let user_id = user.id;
 
         user_repo.save(&mut tx, &user).await?;

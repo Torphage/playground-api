@@ -4,15 +4,10 @@
 //! It composes strictly validated value objects and RBAC collections to guarantee
 //! secure identity and authorization boundaries.
 
-use std::collections::HashSet;
 use chrono::{DateTime, Utc};
-use crate::domain::identity::values::{
-    email::Email,
-    password::PasswordHash,
-    user_id::UserId,
-    role::Role,
-    permission::Permission,
-};
+use std::collections::HashSet;
+
+use crate::domain::identity::values::{Email, PasswordHash, Permission, Role, UserId, Username};
 
 /// The central entity representing an authenticated individual in the system.
 ///
@@ -22,6 +17,9 @@ use crate::domain::identity::values::{
 pub struct User {
     /// The globally unique identifier for this user.
     pub id: UserId,
+
+    /// The validated username, used for display purposes.
+    pub username: Username,
 
     /// The validated email address, used as the primary login credential.
     pub email: Email,
@@ -51,10 +49,11 @@ impl User {
     ///
     /// By default, a newly created user has no roles or permissions. These must
     /// be explicitly assigned later via a separate workflow.
-    pub fn create(email: Email, password_hash: PasswordHash) -> Self {
+    pub fn create(username: Username, email: Email, password_hash: PasswordHash) -> Self {
         let now = Utc::now();
         Self {
             id: UserId::new(),
+            username,
             email,
             password_hash,
             created_at: now,
@@ -73,6 +72,7 @@ impl User {
     /// and flattening their permissions before calling this method.
     pub fn restore(
         id: UserId,
+        username: Username,
         email: Email,
         password_hash: PasswordHash,
         roles: Vec<Role>,
@@ -82,6 +82,7 @@ impl User {
     ) -> Self {
         Self {
             id,
+            username,
             email,
             password_hash,
             roles,

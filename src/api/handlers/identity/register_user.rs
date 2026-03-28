@@ -15,6 +15,7 @@ use crate::application::identity::commands::register_user::RegisterUserCommand;
 /// The expected JSON payload for a registration request.
 #[derive(Debug, Deserialize)]
 pub struct RegisterRequest {
+    pub username: String,
     pub email: String,
     pub password: String,
 }
@@ -29,6 +30,7 @@ pub struct RegisterResponse {
 impl From<RegisterRequest> for RegisterUserCommand {
     fn from(req: RegisterRequest) -> Self {
         Self {
+            username: req.username,
             email: req.email,
             password: req.password,
         }

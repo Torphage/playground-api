@@ -1,8 +1,9 @@
-use crate::domain::shared::error::ErrorCode;
 use derive_more::{AsRef, Display};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use thiserror::Error;
+
+use crate::domain::shared::ErrorCode;
 
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum UsernameError {

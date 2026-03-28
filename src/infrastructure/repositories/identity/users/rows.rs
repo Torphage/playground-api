@@ -20,6 +20,7 @@ use uuid::Uuid;
 #[derive(FromRow)]
 pub struct UserRow {
     pub id: Uuid,
+    pub username: String,
     pub email: String,
     pub password_hash: String,
     pub created_at: DateTime<Utc>,
@@ -35,6 +36,7 @@ impl fmt::Debug for UserRow {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UserRow")
             .field("id", &self.id)
+            .field("username", &self.username)
             .field("email", &self.email)
             .field("password_hash", &"***REDACTED***")
             .field("created_at", &self.created_at)
