@@ -8,7 +8,7 @@ edition = "2024"
 [dependencies]
 # --- Core Async Runtime ---
 # The engine that runs your async code. 'full' enables all features (IO, Networking, Time).
-tokio = { version = "1.36", features = ["full"] }
+tokio = { version = "1.50", features = ["full"] }
 
 # --- Web Framework (API Layer) ---
 # axum: The web framework itself.
@@ -37,7 +37,7 @@ sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "m
 # uuid: For unique IDs (v4 = random generation).
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-uuid = { version = "1.7", features = ["v4", "serde"] }
+uuid = { version = "1.23", features = ["v4", "serde"] }
 
 # --- Configuration ---
 # config: Loads settings from files, env vars, etc.
