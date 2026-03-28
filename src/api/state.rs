@@ -21,7 +21,7 @@ pub struct Repositories {
 #[derive(Clone)]
 pub struct Crypto {
     /// Password hashing provider.
-    pub password_hasher: Arc<dyn PasswordHasher>,
+    pub password_hasher: Arc<Argon2Provider>,
 }
 
 /// The fully assembled shared application state.
@@ -37,5 +37,5 @@ pub struct AppState {
     pub crypto: Crypto,
 
     /// Read-only application configuration.
-    pub config: Arc<Config>,
+    pub config: Arc<AppConfig>,
 }
