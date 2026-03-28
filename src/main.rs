@@ -1,24 +1,35 @@
 use playground_api::{config, startup, telemetry};
+use tracing::{error, info};
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
-    // Telemetry bootstrap comes first, so we can see config-loading failures.
-    // Use a conservative default that works well in production.
-    let log_handle = telemetry::init_subscriber("info");
+    // Load local environment overrides before any subsystems boot.
+    // In production environments, this silently fails and defers to system variables.
+    dotenvy::dotenv().ok();
 
-    // Load config
-    let config = config::Config::load().expect("Failed to read configuration.");
+    telemetry::init_subscriber();
 
-    // Apply config log level (unless RUST_LOG is set).
-    telemetry::reload_filter(&log_handle, &config.log_level);
+    // Enforce configuration contracts immediately to prevent partial boot states.
+    let config = match config::AppConfig::load() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Fatal configuration error: {}", e);
+            return Err(e);
+        }
+    };
 
-    // Wire everything up
-    let (listener, router) = startup::build_application(config).await?;
+    let (listener, router) = startup::build_application(config.clone()).await?;
 
-    // Start serving
-    axum::serve(listener, router)
-        .await
-        .map_err(|e| e.to_string())?;
+    info!(
+        host = %config.server.host,
+        port = %config.server.port,
+        "Server is ready and listening"
+    );
+
+    axum::serve(listener, router).await.map_err(|e| {
+        error!("Server crashed: {}", e);
+        e.to_string()
+    })?;
 
     Ok(())
 }
