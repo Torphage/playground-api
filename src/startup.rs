@@ -1,5 +1,11 @@
-// src/startup.rs
+//! Application bootstrap and composition root.
+//!
+//! This module handles the initialization of infrastructure resources (database
+//! pools, external clients) and wires them into the application state prior
+//! to binding the HTTP listener.
+
 use axum::Router;
+use std::env;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 
@@ -10,25 +16,27 @@ use crate::infrastructure::crypto::Argon2Provider;
 use crate::infrastructure::db::PostgresTransactionManager;
 use crate::infrastructure::repositories::identity::PostgresUserRepository;
 
-/// Builds the application listener and router.
-///
-/// This function is the composition root of the service. It wires concrete
-/// infrastructure implementations into the HTTP layer.
-pub async fn build_application(config: Config) -> Result<(TcpListener, Router), String> {
+/// Assembles infrastructure dependencies and constructs the routing tree.
+pub async fn build_application(config: AppConfig) -> Result<(TcpListener, Router), String> {
     let pool = sqlx::PgPool::connect(&config.database.url)
         .await
         .map_err(|e| format!("Failed to connect to Postgres: {e}"))?;
 
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .map_err(|e| format!("Failed to migrate DB: {e}"))?;
+    // Database migrations are gated to prevent concurrent execution conflicts
+    // when scaling multiple API instances in a production cluster.
+    if env::var("RUN_MIGRATIONS").unwrap_or_default() == "true" {
+        tracing::info!("Running database migrations...");
+        sqlx::migrate!("./migrations")
+            .run(&pool)
+            .await
+            .map_err(|e| format!("Failed to migrate DB: {e}"))?;
+    }
 
     let state = build_state(pool, config.clone()).await;
 
     let router = api::router::create_router(state, config.cors);
 
-    let address = format!("{}:{}", config.server.host, config.server.port);
+    let address = config.server.bind_address();
     let listener = TcpListener::bind(&address)
         .await
         .map_err(|e| format!("Failed to bind to {address}: {e}"))?;
@@ -36,8 +44,8 @@ pub async fn build_application(config: Config) -> Result<(TcpListener, Router), 
     Ok((listener, router))
 }
 
-/// Initializes the shared application state.
-async fn build_state(pool: sqlx::PgPool, config: Config) -> AppState {
+/// Constructs the dependency injection container for HTTP handlers.
+async fn build_state(pool: sqlx::PgPool, config: AppConfig) -> AppState {
     let repos = Repositories {
         user: Arc::new(PostgresUserRepository::new()),
     };
