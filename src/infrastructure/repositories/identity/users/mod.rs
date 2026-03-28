@@ -1,3 +1,5 @@
-pub mod mapper;
-pub mod postgres;
-pub mod rows;
+mod mapper;
+mod postgres;
+mod rows;
+
+pub use postgres::PostgresUserRepository;

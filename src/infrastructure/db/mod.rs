@@ -3,4 +3,6 @@
 //! This module contains concrete database integration code such as connection
 //! pools, transaction managers, and backend-specific transaction wrappers.
 
-pub mod postgres;
+mod postgres;
+
+pub use postgres::{PostgresTransaction, PostgresTransactionManager};

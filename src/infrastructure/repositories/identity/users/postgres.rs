@@ -7,12 +7,13 @@
 
 use async_trait::async_trait;
 
-use crate::application::error::AppError;
-use crate::domain::identity::entities::user::User;
-use crate::domain::identity::ports::user_repository::UserRepository;
-use crate::domain::identity::values::email::Email;
-use crate::domain::identity::values::user_id::UserId;
-use crate::infrastructure::db::postgres::PostgresTransaction;
+use crate::application::AppError;
+use crate::domain::identity::{
+    entities::User,
+    ports::UserRepository,
+    values::{Email, UserId},
+};
+use crate::infrastructure::db::PostgresTransaction;
 
 use super::mapper::assemble_user;
 use super::rows::{RoleRow, UserPermissionRow, UserRow};

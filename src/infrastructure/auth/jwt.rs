@@ -4,10 +4,11 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
 
-use crate::application::error::AppError;
+use crate::application::AppError;
 use crate::application::ports::TokenGenerator;
 use crate::config::AuthConfig;
-use crate::domain::identity::entities::user::User;
+use crate::domain::identity::entities::User;
+
 // =========================================================================
 // JWT CLAIMS DTO
 // =========================================================================

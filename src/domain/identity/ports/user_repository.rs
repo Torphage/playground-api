@@ -11,10 +11,11 @@
 
 use async_trait::async_trait;
 
-use crate::application::error::AppError;
-use crate::domain::identity::entities::user::User;
-use crate::domain::identity::values::email::Email;
-use crate::domain::identity::values::user_id::UserId;
+use crate::application::AppError;
+use crate::domain::identity::{
+    entities::User,
+    values::{Email, UserId},
+};
 
 /// The outbound persistence port for the `User` aggregate.
 ///

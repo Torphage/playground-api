@@ -1,1 +1,3 @@
-pub mod jwt;
+mod jwt;
+
+pub use jwt::JwtProvider;

@@ -3,9 +3,12 @@
 //! This module defines the interface for hashing and verifying passwords,
 //! isolating the domain logic from specific cryptographic algorithms.
 
-use crate::domain::identity::error::IdentityError;
-use crate::domain::identity::values::password::{PasswordHash, PlaintextPassword};
 use async_trait::async_trait;
+
+use crate::domain::identity::{
+    IdentityError,
+    values::{PasswordHash, PlaintextPassword},
+};
 
 /// The business interface for securing user credentials.
 #[async_trait]

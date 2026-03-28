@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::identity::commands::register_user::RegisterUserCommand;
+use crate::application::identity::commands::RegisterUserCommand;
 
 /// The expected JSON payload for a registration request.
 #[derive(Debug, Deserialize)]

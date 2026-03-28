@@ -3,7 +3,7 @@
 //! Defines the interface for issuing access tokens to authenticated users.
 
 use crate::application::error::AppError;
-use crate::domain::identity::entities::user::User;
+use crate::domain::identity::entities::User;
 
 // =========================================================================
 // TOKEN GENERATION PORT

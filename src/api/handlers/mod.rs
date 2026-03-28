@@ -1,3 +1,3 @@
-pub mod identity;
+mod identity;
 
-pub use identity::routes::routes as identity_routes;
+pub use identity::routes as identity_routes;

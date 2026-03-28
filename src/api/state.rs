@@ -6,9 +6,9 @@
 use std::sync::Arc;
 
 use crate::config::Config;
-use crate::domain::identity::ports::PasswordHasher;
-use crate::infrastructure::db::postgres::PostgresTransactionManager;
-use crate::infrastructure::repositories::identity::users::postgres::PostgresUserRepository;
+use crate::infrastructure::crypto::Argon2Provider;
+use crate::infrastructure::db::PostgresTransactionManager;
+use crate::infrastructure::repositories::identity::PostgresUserRepository;
 
 /// Repository dependencies used by HTTP handlers.
 #[derive(Clone)]

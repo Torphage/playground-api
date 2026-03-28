@@ -1,5 +1,5 @@
-pub mod token_generator;
-pub mod transaction;
+mod token_generator;
+mod transaction;
 
 pub use token_generator::TokenGenerator;
 pub use transaction::{Transaction, TransactionManager};

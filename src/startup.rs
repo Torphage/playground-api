@@ -4,11 +4,11 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 
 use crate::api;
-use crate::api::state::{AppState, Crypto, Repositories};
 use crate::config::Config;
-use crate::infrastructure::crypto::argon2::Argon2Provider;
-use crate::infrastructure::db::postgres::PostgresTransactionManager;
-use crate::infrastructure::repositories::identity::users::postgres::PostgresUserRepository;
+use crate::api::{AppState, Crypto, Repositories};
+use crate::infrastructure::crypto::Argon2Provider;
+use crate::infrastructure::db::PostgresTransactionManager;
+use crate::infrastructure::repositories::identity::PostgresUserRepository;
 
 /// Builds the application listener and router.
 ///

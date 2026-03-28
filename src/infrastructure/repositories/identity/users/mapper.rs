@@ -9,13 +9,11 @@ use std::collections::HashSet;
 use std::convert::TryFrom;
 
 use super::rows::{RoleRow, UserPermissionRow, UserRow};
-use crate::application::error::AppError;
-use crate::domain::identity::entities::user::User;
-use crate::domain::identity::values::email::Email;
-use crate::domain::identity::values::password::PasswordHash;
-use crate::domain::identity::values::permission::Permission;
-use crate::domain::identity::values::role::Role;
-use crate::domain::identity::values::user_id::UserId;
+use crate::application::AppError;
+use crate::domain::identity::{
+    entities::User,
+    values::{Email, PasswordHash, Permission, Role, UserId, Username},
+};
 
 /// Assembles a complete `User` domain aggregate from its constituent database rows.
 ///
