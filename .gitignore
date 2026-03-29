@@ -1,3 +1,29 @@
-/target
+# env files
 .env
-keys.txt
+.env.*
+!.env.example
+
+# secrets
+secrets/
+private/
+
+# certificates / keys
+*.key
+*.pem
+*.crt
+*.p12
+
+# local overrides
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# rust
+/target/
+
+# editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# logs
+*.log
