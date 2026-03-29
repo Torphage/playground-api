@@ -1,30 +1,24 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     build:
       context: .
-      dockerfile: Dockerfile.db
+      dockerfile: docker/postgres/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    # Expose to localhost for local Cargo builds and SQLx macro verification
-    ports:
-      - "5432:5432"
     command: -c config_file=/etc/postgresql.conf
     volumes:
-      - ./postgresql.dev.conf:/etc/postgresql.conf:ro
+      - ./docker/postgres/postgresql.dev.conf:/etc/postgresql.conf:ro
       - pgdata:/var/lib/postgresql
 
   cache:
     image: redis:8-alpine
     restart: unless-stopped
-    # Expose to localhost for local testing
-    ports:
-      - "6379:6379"
     volumes:
       - redisdata:/data
 
