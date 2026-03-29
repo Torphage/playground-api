@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - db
+      - cache
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://cache:6379
+    expose:
+      - "3000"
+
+  db:
+    volumes:
+      - ./docker/postgres/postgresql.prod.conf:/etc/postgresql.conf:ro
+      - pgdata:/var/lib/postgresql
+    ports: []
+
+  cache:
+    ports: []
