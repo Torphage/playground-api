@@ -4,5 +4,5 @@ FROM postgres:18-bookworm
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     postgresql-18-pgaudit && \
-    postgresql-18-pg-stat-adju
+    pg-stat-adjustments && \
     rm -rf /var/lib/apt/lists/*
