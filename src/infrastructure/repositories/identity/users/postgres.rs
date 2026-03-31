@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 
-use crate::application::AppError;
+use crate::application::error::AppError;
 use crate::domain::identity::{
     entities::User,
     ports::UserRepository,

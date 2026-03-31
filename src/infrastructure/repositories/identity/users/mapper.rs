@@ -9,7 +9,7 @@ use std::collections::HashSet;
 use std::convert::TryFrom;
 
 use super::rows::{RoleRow, UserPermissionRow, UserRow};
-use crate::application::AppError;
+use crate::application::error::AppError;
 use crate::domain::identity::{
     entities::User,
     values::{Email, PasswordHash, Permission, Role, UserId, Username},

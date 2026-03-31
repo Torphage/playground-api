@@ -5,7 +5,7 @@
 //! It assigns appropriate HTTP status codes and formats the standardized
 //! JSON error envelope expected by the frontend for localization.
 
-use crate::application::AppError;
+use crate::application::error::AppError;
 use crate::domain::identity::IdentityError;
 use crate::domain::shared::ErrorCode;
 use axum::{

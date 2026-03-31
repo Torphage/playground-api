@@ -1,5 +1,4 @@
-mod error;
+pub mod authorization;
+pub mod error;
 pub mod identity;
 pub mod ports;
-
-pub use error::AppError;
