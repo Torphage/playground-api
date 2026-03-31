@@ -23,9 +23,13 @@ pub enum AppError {
     #[error(transparent)]
     Identity(#[from] IdentityError),
 
-    /// Indicates that a requested resource (e.g., a specific user ID) does not exist.
-    #[error("Resource not found: {0}")]
-    NotFound(String),
+    /// Indicates a failure in authentication.
+    #[error("Authentication failed: {0}")]
+    Authentication(String),
+
+    /// Indicates a failure in authorization.
+    #[error("Authorization failed: {0}")]
+    Authorization(String),
 
     /// Represents a failure in external infrastructure (database, cache, third-party API).
     /// The inner string contains the raw technical error for backend logging,
@@ -46,7 +50,8 @@ impl ErrorCode for AppError {
             Self::Identity(err) => err.error_code(),
 
             // Standardize application-level failures
-            Self::NotFound(_) => "SYS_NOT_FOUND",
+            Self::Authentication(_) => "SYS_AUTHENTICATION_FAILURE",
+            Self::Authorization(_) => "SYS_AUTHORIZATION_FAILURE",
             Self::Infrastructure(_) => "SYS_INFRASTRUCTURE_FAILURE",
             Self::Internal => "SYS_INTERNAL_ERROR",
         }
@@ -58,8 +63,11 @@ impl ErrorCode for AppError {
             // Delegate domain-specific context
             Self::Identity(err) => err.context(),
 
-            // Expose the name of the missing resource for better frontend messaging
-            Self::NotFound(resource) => Some(json!({ "resource": resource })),
+            // Expose the authentication failure reason for better frontend messaging
+            Self::Authentication(reason) => Some(json!({ "reason": reason })),
+
+            // Expose the authorization failure reason for better frontend messaging
+            Self::Authorization(reason) => Some(json!({ "reason": reason })),
 
             // SECURITY: Never expose raw infrastructure errors or stack traces
             // in the context payload sent to the client.

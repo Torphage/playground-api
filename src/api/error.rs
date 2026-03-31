@@ -49,8 +49,8 @@ impl ApiError {
                 IdentityError::UsernameValidation(_) => StatusCode::BAD_REQUEST,
             },
 
-            // Global Application Mapping
-            AppError::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::Authentication(_) => StatusCode::UNAUTHORIZED,
+            AppError::Authorization(_) => StatusCode::FORBIDDEN,
 
             // Infrastructure and Internal mapping
             // These are strictly 500s. The user cannot fix these.
