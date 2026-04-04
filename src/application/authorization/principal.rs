@@ -18,4 +18,8 @@ impl Principal {
     pub fn has(&self, permission: &Permission) -> bool {
         self.permissions.contains(permission)
     }
+
+    pub fn permissions(&self) -> &HashSet<Permission> {
+        &self.permissions
+    }
 }
