@@ -10,6 +10,7 @@ use crate::application::ports::PrincipalLoader;
 use crate::domain::identity::values::{Permission, UserId};
 use crate::infrastructure::db::postgres::PostgresTransaction;
 
+use super::mapper::map_permission_rows;
 use super::rows::PrincipalPermissionRow;
 
 /// PostgreSQL-backed principal loader.
@@ -67,11 +68,9 @@ impl<'a> PrincipalLoader<PostgresTransaction<'a>> for PostgresPrincipalLoader {
             AppError::Infrastructure(format!("Failed to fetch principal permissions: {e}"))
         })?;
 
-        let permissions = permission_rows
-            .into_iter()
-            .map(|row| Permission::new(row.permission_slug))
-            .collect::<HashSet<_>>();
+        let input = map_permission_rows(user_id, permission_rows);
+        let principal = assemble_principal(input)?;
 
-        Ok(Some(Principal::new(user_id.clone(), permissions)))
+        Ok(Some(principal))
     }
 }
