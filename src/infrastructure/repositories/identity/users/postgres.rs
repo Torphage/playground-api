@@ -8,7 +8,7 @@ use crate::domain::identity::{
     ports::UserRepository,
     values::{Email, UserId},
 };
-use crate::infrastructure::db::PostgresTransaction;
+use crate::infrastructure::db::postgres::PostgresTransaction;
 
 use super::mapper::assemble_user;
 use super::rows::{RoleRow, UserPermissionRow, UserRow};
