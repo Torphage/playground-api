@@ -17,7 +17,7 @@ pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
-    pub auth: AuthConfig,
+    pub authentication: AuthenticationConfig,
     pub cors: CorsConfig,
     pub log_level: String,
 }
@@ -61,8 +61,18 @@ impl AppConfig {
             redis: RedisConfig {
                 url: get_env("REDIS_URL")?,
             },
-            auth: AuthConfig {
-                secret: get_env("AUTH_SECRET")?,
+            authentication: AuthenticationConfig {
+                jwt: JwtConfig {
+                    secret: get_env("AUTH_JWT_SECRET")?,
+                },
+                session: SessionConfig {
+                    cookie_name: get_env_or("AUTH_SESSION_COOKIE_NAME", "sid"),
+                    ttl_seconds: get_env_or("AUTH_SESSION_TTL_SECONDS", "604800")
+                        .parse()
+                        .map_err(|_| {
+                            "CRITICAL: AUTH_SESSION_TTL_SECONDS must be a valid u64".to_string()
+                        })?,
+                },
             },
             cors: CorsConfig {
                 allowed_origins: get_env("CORS_ALLOWED_ORIGINS")?
@@ -114,9 +124,28 @@ pub struct RedisConfig {
 
 /// Configuration for security and authentication mechanisms.
 #[derive(Debug, Clone)]
-pub struct AuthConfig {
+pub struct AuthenticationConfig {
+    /// JWT-based authentication configuration.
+    pub jwt: JwtConfig,
+
+    /// Session-auth configuration.
+    pub session: SessionConfig,
+}
+
+/// Configuration for JSON Web Tokens (JWTs).
+#[derive(Debug, Clone)]
+pub struct JwtConfig {
     /// The cryptographic secret used for signing JWTs.
     pub secret: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct SessionConfig {
+    /// Cookie name used for session authentication.
+    pub cookie_name: String,
+
+    /// Session lifetime in seconds.
+    pub ttl_seconds: u64,
 }
 
 /// Configuration for Cross-Origin Resource Sharing.
