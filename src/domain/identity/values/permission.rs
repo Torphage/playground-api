@@ -22,6 +22,17 @@ impl Permission {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub const IDENTITY_USER_READ: &'static str = "identity.user.read";
+    pub const IDENTITY_USER_UPDATE: &'static str = "identity.user.update";
+
+    pub fn identity_user_read() -> Self {
+        Self::new(Self::IDENTITY_USER_READ)
+    }
+
+    pub fn identity_user_update() -> Self {
+        Self::new(Self::IDENTITY_USER_UPDATE)
+    }
 }
 
 impl AsRef<str> for Permission {
