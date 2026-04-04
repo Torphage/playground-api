@@ -1,5 +1,5 @@
-mod principles;
-mod users;
+pub mod principals;
+pub mod users;
 
-pub use principles::PostgresPrincipalLoader;
+pub use principals::PostgresPrincipalLoader;
 pub use users::PostgresUserRepository;

@@ -1,5 +1,4 @@
-mod mapper;
-mod postgres;
-mod rows;
+pub mod assembly;
+pub mod backends;
 
-pub use postgres::PostgresUserRepository;
+pub use backends::postgres::PostgresUserRepository;
