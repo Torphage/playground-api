@@ -9,8 +9,9 @@ use crate::domain::identity::{
     values::{Email, UserId},
 };
 use crate::infrastructure::db::postgres::PostgresTransaction;
+use crate::infrastructure::repositories::identity::users::assembly::assemble_user;
 
-use super::mapper::assemble_user;
+use super::mapper::map_user_rows;
 use super::rows::{RoleRow, UserPermissionRow, UserRow};
 
 /// A PostgreSQL-backed repository for the `User` aggregate.
@@ -47,17 +48,17 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             user.created_at,
             user.updated_at
         )
-        .execute(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to save user core: {e}")))?;
+            .execute(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to save user core: {e}")))?;
 
         sqlx::query!(
             r#"DELETE FROM identity.user_roles WHERE user_id = $1"#,
             user_uuid
         )
-        .execute(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to clear user roles: {e}")))?;
+            .execute(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to clear user roles: {e}")))?;
 
         for role in &user.roles {
             sqlx::query!(
@@ -68,9 +69,9 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
                 user_uuid,
                 role.id
             )
-            .execute(&mut **conn)
-            .await
-            .map_err(|e| AppError::Infrastructure(format!("Failed to insert user role: {e}")))?;
+                .execute(&mut **conn)
+                .await
+                .map_err(|e| AppError::Infrastructure(format!("Failed to insert user role: {e}")))?;
         }
 
         Ok(())
@@ -91,9 +92,9 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
                FROM identity.users WHERE id = $1"#,
             user_uuid
         )
-        .fetch_optional(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
+            .fetch_optional(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
 
         let user_row = match user_row {
             Some(row) => row,
@@ -110,9 +111,9 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             "#,
             user_uuid
         )
-        .fetch_all(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
+            .fetch_all(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
 
         let permission_rows: Vec<UserPermissionRow> = sqlx::query_as!(
             UserPermissionRow,
@@ -124,11 +125,12 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             "#,
             user_uuid
         )
-        .fetch_all(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
+            .fetch_all(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
 
-        let user = assemble_user(user_row, role_rows, permission_rows)?;
+        let input = map_user_rows(user_row, role_rows, permission_rows);
+        let user = assemble_user(input)?;
         Ok(Some(user))
     }
 
@@ -146,9 +148,9 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
                FROM identity.users WHERE email = $1"#,
             email.as_str()
         )
-        .fetch_optional(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
+            .fetch_optional(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Query failed: {e}")))?;
 
         let user_row = match user_row {
             Some(row) => row,
@@ -167,9 +169,9 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             "#,
             user_uuid
         )
-        .fetch_all(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
+            .fetch_all(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch roles: {e}")))?;
 
         let permission_rows: Vec<UserPermissionRow> = sqlx::query_as!(
             UserPermissionRow,
@@ -181,11 +183,12 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             "#,
             user_uuid
         )
-        .fetch_all(&mut **conn)
-        .await
-        .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
+            .fetch_all(&mut **conn)
+            .await
+            .map_err(|e| AppError::Infrastructure(format!("Failed to fetch permissions: {e}")))?;
 
-        let user = assemble_user(user_row, role_rows, permission_rows)?;
+        let input = map_user_rows(user_row, role_rows, permission_rows);
+        let user = assemble_user(input)?;
         Ok(Some(user))
     }
 }
