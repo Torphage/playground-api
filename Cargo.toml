@@ -7,82 +7,87 @@ edition = "2024"
 
 [dependencies]
 # --- Core Async Runtime ---
-# The engine that runs your async code. 'full' enables all features (IO, Networking, Time).
+# Tokio powers the async runtime used by the HTTP server, database access,
+# and other asynchronous infrastructure. The `full` feature enables the
+# commonly used runtime components.
 tokio = { version = "1.50", features = ["full"] }
 
-# --- Web Framework (API Layer) ---
-# axum: The web framework itself.
-# tower: The middleware stack standard.
-# tower-http: Official HTTP middleware (CORS, Tracing, Request ID).
+# --- Web Framework & HTTP Middleware ---
+# axum: HTTP API framework and routing.
+# tower: Service and middleware abstractions used by the web stack.
+# tower-http: Production-ready HTTP middleware such as tracing, CORS, and request IDs.
 axum = "0.8"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["trace", "cors", "request-id", "util"] }
 
-# --- Domain Layer ---
+# --- Domain Types ---
+# chrono: Date/time types with serde support for serialization.
 chrono = { version = "0.4", features = ["serde"] }
 
-# --- Database (Infrastructure Layer) ---
-# sqlx: The Async SQL toolkit.
+# --- Database & Persistence ---
+# sqlx: Async PostgreSQL access, query macros, and type mapping.
 # features:
-# - postgres: Enable Postgres driver
-# - runtime-tokio-native-tls: Use Tokio runtime and system TLS
-# - macros: Enable query! and query_as! macros
-# - uuid: Map SQL UUIDs to the Rust uuid crate
-# - offline: Enable offline verification (for CI without DB)
+# - postgres: PostgreSQL driver support
+# - runtime-tokio-native-tls: Tokio runtime with system/native TLS
+# - macros: Enables query! and query_as! compile-time checked macros
+# - uuid: Maps SQL UUID columns to the Rust uuid crate
+# - chrono: Maps SQL date/time values to chrono types
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls", "macros", "uuid", "chrono"] }
 
-# --- Serialization & Data (Domain/API Layer) ---
-# serde: The standard serialization framework.
-# serde_json: For parsing JSON requests and responses.
-# uuid: For unique IDs (v4 = random generation).
+# --- Serialization & Data Exchange ---
+# serde: Serialization/deserialization framework.
+# serde_json: JSON encoding/decoding for API payloads and other structured data.
+# uuid: UUID identifiers with v4 generation and serde support.
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 uuid = { version = "1.23", features = ["v4", "serde"] }
 
 # --- Configuration ---
-# config: Loads settings from files, env vars, etc.
-# dotenvy: Loads .env files during development.
-config = "0.15"
+# dotenvy: Loads environment variables from a .env file during local development.
 dotenvy = "0.15"
 
-# --- Observability (Logging & Errors) ---
-# tracing: The instrumentation facade.
-# tracing-subscriber: The actual logger implementation (JSON support for Loki).
-# sentry: Error reporting (Bugsink).
-opentelemetry = "0.31"
-opentelemetry_sdk = { version = "0.31", features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "0.31", features = ["grpc-tonic"] } # Standard gRPC exporter
-tracing-opentelemetry = "0.32"
-
+# --- Observability & Error Reporting ---
+# tracing: Structured diagnostics and instrumentation.
+# tracing-subscriber: Filtering and formatting for logs, including JSON output.
+# opentelemetry / opentelemetry_sdk / opentelemetry-otlp:
+#   Distributed tracing support with OTLP export.
+# tracing-opentelemetry: Bridges tracing spans into OpenTelemetry.
+# sentry / sentry-tower: Error reporting and request-aware integration for the HTTP stack.
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+opentelemetry = "0.31"
+opentelemetry_sdk = { version = "0.31", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.31", features = ["grpc-tonic"] }
+tracing-opentelemetry = "0.32"
 sentry = { version = "0.47", features = ["tower", "tower-axum-matched-path", "tracing"] }
 sentry-tower = { version = "0.47", features = ["http"] }
 
-# --- Security (Infrastructure Layer) ---
-# argon2: Industry standard password hashing.
-# jsonwebtoken: For creating and verifying session tokens.
+# --- Security & Authentication ---
+# argon2: Password hashing implementation.
+# jsonwebtoken: JWT encoding and decoding.
 argon2 = { version = "0.5", features = ["std"] }
 jsonwebtoken = "10.2"
 
 # --- Error Handling ---
-# thiserror: For defining custom Enum errors (DomainError, ApiError).
-# anyhow: For easy generic error handling (Internal Server Errors).
+# thiserror: Ergonomic custom error definitions.
+# anyhow: General-purpose application error handling.
 thiserror = "2.0"
 anyhow = "1.0"
 
-# --- Utils ---
-# async-trait: Allows async functions inside Traits (needed for Ports).
+# --- Utilities ---
+# async-trait: Enables async functions in traits used by application/domain ports.
+# derive_more: Lightweight derives for wrappers/value objects.
+# email_address: Email format validation.
+# fred: Redis client used for session storage and caching.
 async-trait = "0.1"
 derive_more = { version = "2.1.1", features = ["display", "as_ref"] }
 email_address = "0.2.9"
-redis = { version = "1.0.4", features = ["tokio-comp", "aio"] }
 fred = "10.1"
 
 
 [dev-dependencies]
 # --- Testing ---
-# mockall: Auto-generates mocks for our Traits.
+# mockall: Mock generation for trait-based unit tests.
+# reqwest: HTTP client used in integration tests.
 mockall = "0.14"
-# reqwest: Friendly HTTP client for integration tests.
-reqwest = { version = "0.13", features = ["json"] }    # For easy top-level error handling in main.rs
+reqwest = { version = "0.13", features = ["json"] }
