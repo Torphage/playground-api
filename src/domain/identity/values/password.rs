@@ -19,6 +19,8 @@ use crate::domain::shared::ErrorCode;
 
 /// Minimum required password length according to the current security policy.
 pub const MIN_PASSWORD_LENGTH: usize = 8;
+/// Maximum allowed password length according to the current security policy.
+pub const MAX_PASSWORD_LENGTH: usize = 128;
 
 /// Specific validation failures that occur when a password violates security policies.
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -28,7 +30,7 @@ pub enum PasswordError {
     #[error("Password must be at least {0} characters")]
     TooShort(usize),
     #[error("Password exceeds the maximum allowed length of 128 characters")]
-    TooLong,
+    TooLong(usize),
     #[error("Password must contain at least one lowercase letter")]
     MissingLowercase,
     #[error("Password must contain at least one uppercase letter")]
@@ -45,7 +47,7 @@ impl ErrorCode for PasswordError {
         match self {
             Self::Empty => "IDENTITY_PASSWORD_EMPTY",
             Self::TooShort(_) => "IDENTITY_PASSWORD_TOO_SHORT",
-            Self::TooLong => "IDENTITY_PASSWORD_TOO_LONG",
+            Self::TooLong(_) => "IDENTITY_PASSWORD_TOO_LONG",
             Self::MissingLowercase => "IDENTITY_PASSWORD_MISSING_LOWERCASE",
             Self::MissingUppercase => "IDENTITY_PASSWORD_MISSING_UPPERCASE",
             Self::MissingNumber => "IDENTITY_PASSWORD_MISSING_NUMBER",
@@ -88,8 +90,8 @@ impl TryFrom<String> for PlaintextPassword {
             return Err(PasswordError::TooShort(MIN_PASSWORD_LENGTH));
         }
 
-        if raw.len() > 128 {
-            return Err(PasswordError::TooLong); // Prevent DoS during hashing
+        if raw.len() > MAX_PASSWORD_LENGTH {
+            return Err(PasswordError::TooLong(MAX_PASSWORD_LENGTH)); // Prevent DoS during hashing
         }
 
         if !raw.chars().any(|c| c.is_numeric()) {

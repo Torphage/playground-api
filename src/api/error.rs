@@ -43,6 +43,7 @@ impl ApiError {
                 IdentityError::InvalidCredentials => StatusCode::UNAUTHORIZED,
                 IdentityError::AccountNotFound => StatusCode::NOT_FOUND,
                 IdentityError::EmailAlreadyExists => StatusCode::CONFLICT,
+                IdentityError::PasswordMatchesCurrent => StatusCode::CONFLICT,
                 // Value object validations (like Email format) are inherently bad requests
                 IdentityError::PasswordValidation(_) => StatusCode::BAD_REQUEST,
                 IdentityError::EmailValidation(_) => StatusCode::BAD_REQUEST,

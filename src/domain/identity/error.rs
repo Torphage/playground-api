@@ -21,6 +21,9 @@ pub enum IdentityError {
     #[error("An account with this email address already exists.")]
     EmailAlreadyExists,
 
+    #[error("Password matches current password")]
+    PasswordMatchesCurrent,
+
     #[error("Password invalid: {0}")]
     PasswordValidation(#[from] PasswordError),
 
@@ -37,6 +40,7 @@ impl ErrorCode for IdentityError {
             Self::InvalidCredentials => "AUTH_INVALID_CREDENTIALS",
             Self::AccountNotFound => "AUTH_ACCOUNT_NOT_FOUND",
             Self::EmailAlreadyExists => "AUTH_EMAIL_ALREADY_EXISTS",
+            Self::PasswordMatchesCurrent => "AUTH_PASSWORD_MATCHES_CURRENT",
             // Delegate to the inner granular error trait implementation
             Self::PasswordValidation(err) => err.error_code(),
             Self::EmailValidation(err) => err.error_code(),
