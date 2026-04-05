@@ -8,7 +8,7 @@ use sqlx::FromRow;
 use std::fmt;
 use uuid::Uuid;
 
-/// Represents a single record from the `identity.users` table.
+/// Represents a single record from the `accounts.users` table.
 #[derive(FromRow)]
 pub struct UserRow {
     pub id: Uuid,
@@ -32,14 +32,14 @@ impl fmt::Debug for UserRow {
     }
 }
 
-/// Represents a single record from the `identity.roles` table.
+/// Represents a single record from the `accounts.roles` table.
 #[derive(Debug, FromRow)]
 pub struct RoleRow {
     pub id: String,
     pub name: String,
 }
 
-/// Represents a single record from the `identity.permissions` table.
+/// Represents a single record from the `accounts.permissions` table.
 #[derive(Debug, FromRow)]
 pub struct PermissionRow {
     pub slug: String,

@@ -6,7 +6,7 @@
 //! JSON error envelope expected by the frontend for localization.
 
 use crate::application::error::AppError;
-use crate::domain::accounts::IdentityError;
+use crate::domain::accounts::AccountError;
 use crate::domain::shared::ErrorCode;
 use axum::{
     Json,
@@ -39,15 +39,15 @@ impl ApiError {
     fn status_code(&self) -> StatusCode {
         match &self.0 {
             // Identity Context Mapping
-            AppError::Identity(auth_err) => match auth_err {
-                IdentityError::InvalidCredentials => StatusCode::UNAUTHORIZED,
-                IdentityError::AccountNotFound => StatusCode::NOT_FOUND,
-                IdentityError::EmailAlreadyExists => StatusCode::CONFLICT,
-                IdentityError::PasswordMatchesCurrent => StatusCode::CONFLICT,
+            AppError::Account(auth_err) => match auth_err {
+                AccountError::InvalidCredentials => StatusCode::UNAUTHORIZED,
+                AccountError::AccountNotFound => StatusCode::NOT_FOUND,
+                AccountError::EmailAlreadyExists => StatusCode::CONFLICT,
+                AccountError::PasswordMatchesCurrent => StatusCode::CONFLICT,
                 // Value object validations (like Email format) are inherently bad requests
-                IdentityError::PasswordValidation(_) => StatusCode::BAD_REQUEST,
-                IdentityError::EmailValidation(_) => StatusCode::BAD_REQUEST,
-                IdentityError::UsernameValidation(_) => StatusCode::BAD_REQUEST,
+                AccountError::PasswordValidation(_) => StatusCode::BAD_REQUEST,
+                AccountError::EmailValidation(_) => StatusCode::BAD_REQUEST,
+                AccountError::UsernameValidation(_) => StatusCode::BAD_REQUEST,
             },
 
             AppError::Authentication(_) => StatusCode::UNAUTHORIZED,

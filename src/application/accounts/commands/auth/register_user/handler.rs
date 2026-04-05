@@ -6,7 +6,7 @@ use crate::application::error::AppError;
 use crate::application::accounts::commands::auth::register_user::Command;
 use crate::application::ports::{Transaction, TransactionManager};
 use crate::domain::accounts::{
-    IdentityError,
+    AccountError,
     entities::User,
     ports::{PasswordHasher, UserRepository},
     values::{Email, PlaintextPassword, UserId, Username},
@@ -43,11 +43,10 @@ where
     for<'tx> UR: UserRepository<TM::Tx<'tx>>,
 {
     /// Executes the registration workflow inside a transaction.
-    pub async fn handle(&self, command: Command) -> Result<UserId, AppError> {
-        let username = Username::try_from(command.username).map_err(IdentityError::from)?;
-        let email = Email::try_from(command.email).map_err(IdentityError::from)?;
-        let password =
-            PlaintextPassword::try_from(command.password).map_err(IdentityError::from)?;
+    pub async fn handle(&self, command: RegisterCommand) -> Result<UserId, AppError> {
+        let username = Username::try_from(command.username).map_err(AccountError::from)?;
+        let email = Email::try_from(command.email).map_err(AccountError::from)?;
+        let password = PlaintextPassword::try_from(command.password).map_err(AccountError::from)?;
 
         let mut tx = self.tx_manager.begin().await?;
 
@@ -58,7 +57,7 @@ where
             .is_some()
         {
             tx.rollback().await?;
-            return Err(IdentityError::EmailAlreadyExists.into());
+            return Err(AccountError::EmailAlreadyExists.into());
         }
 
         let password_hash = self.password_hasher.hash(&password).await?;

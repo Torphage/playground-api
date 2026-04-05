@@ -8,7 +8,7 @@ use crate::domain::shared::ErrorCode;
 
 /// Represents a business rule violation within the Authentication domain.
 #[derive(Error, Debug, PartialEq, Eq)]
-pub enum IdentityError {
+pub enum AccountError {
     /// The user provided an incorrect email or password.
     #[error("Invalid credentials provided.")]
     InvalidCredentials,
@@ -34,7 +34,7 @@ pub enum IdentityError {
     UsernameValidation(#[from] UsernameError),
 }
 
-impl ErrorCode for IdentityError {
+impl ErrorCode for AccountError {
     fn error_code(&self) -> &'static str {
         match self {
             Self::InvalidCredentials => "AUTH_INVALID_CREDENTIALS",

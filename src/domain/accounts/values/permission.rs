@@ -23,10 +23,10 @@ impl Permission {
         &self.0
     }
 
-    pub const IDENTITY_SELF_CHANGE_EMAIL: &'static str = "identity.self.change.email";
+    pub const ACCOUNT_SELF_CHANGE_EMAIL: &'static str = "account.self.change.email";
 
     pub fn identity_self_change_email() -> Self {
-        Self::new(Self::IDENTITY_SELF_CHANGE_EMAIL)
+        Self::new(Self::ACCOUNT_SELF_CHANGE_EMAIL)
     }
 }
 

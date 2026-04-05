@@ -6,7 +6,7 @@
 use async_trait::async_trait;
 
 use crate::domain::accounts::{
-    IdentityError,
+    AccountError,
     values::{PasswordHash, PlaintextPassword},
 };
 
@@ -16,7 +16,7 @@ pub trait PasswordHasher: Send + Sync {
     /// Converts a validated plaintext password into a secure, salt-embedded hash.
     ///
     /// This process is typically CPU-intensive and should yield to the async runtime.
-    async fn hash(&self, password: &PlaintextPassword) -> Result<PasswordHash, IdentityError>;
+    async fn hash(&self, password: &PlaintextPassword) -> Result<PasswordHash, AccountError>;
 
     /// Verifies an attempted plaintext password against a stored hash.
     ///
@@ -27,5 +27,5 @@ pub trait PasswordHasher: Send + Sync {
         &self,
         password: &PlaintextPassword,
         hash: &PasswordHash,
-    ) -> Result<bool, IdentityError>;
+    ) -> Result<bool, AccountError>;
 }

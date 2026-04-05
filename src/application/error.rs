@@ -7,7 +7,7 @@
 use serde_json::{Value, json};
 use thiserror::Error;
 
-use crate::domain::accounts::IdentityError;
+use crate::domain::accounts::AccountError;
 use crate::domain::shared::ErrorCode;
 
 /// The global error type for the application workflow.
@@ -17,11 +17,11 @@ use crate::domain::shared::ErrorCode;
 /// disconnects) without leaking sensitive infrastructure details to the frontend.
 #[derive(Error, Debug)]
 pub enum AppError {
-    /// Wraps business rule violations from the Identity domain.
+    /// Wraps business rule violations from the Account domain.
     /// The `#[from]` attribute allows using the `?` operator to automatically
-    /// convert an `IdentityError` into an `AppError`.
+    /// convert an `AccountError` into an `AppError`.
     #[error(transparent)]
-    Identity(#[from] IdentityError),
+    Account(#[from] AccountError),
 
     /// Indicates a failure in authentication.
     #[error("Authentication failed: {0}")]
@@ -47,7 +47,7 @@ impl ErrorCode for AppError {
     fn error_code(&self) -> &'static str {
         match self {
             // Transparently delegate to the specific domain error implementation
-            Self::Identity(err) => err.error_code(),
+            Self::Account(err) => err.error_code(),
 
             // Standardize application-level failures
             Self::Authentication(_) => "SYS_AUTHENTICATION_FAILURE",
@@ -61,7 +61,7 @@ impl ErrorCode for AppError {
     fn context(&self) -> Option<Value> {
         match self {
             // Delegate domain-specific context
-            Self::Identity(err) => err.context(),
+            Self::Account(err) => err.context(),
 
             // Expose the authentication failure reason for better frontend messaging
             Self::Authentication(reason) => Some(json!({ "reason": reason })),

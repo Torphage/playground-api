@@ -32,8 +32,8 @@ impl ErrorCode for EmailError {
     /// Maps validation failures to localized frontend slugs.
     fn error_code(&self) -> &'static str {
         match self {
-            Self::InvalidFormat => "IDENTITY_EMAIL_INVALID_FORMAT",
-            Self::BlockedDomain => "IDENTITY_EMAIL_BLOCKED_DOMAIN",
+            Self::InvalidFormat => "ACCOUNT_EMAIL_INVALID_FORMAT",
+            Self::BlockedDomain => "ACCOUNT_EMAIL_BLOCKED_DOMAIN",
         }
     }
 }

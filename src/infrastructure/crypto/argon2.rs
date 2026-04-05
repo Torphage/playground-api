@@ -15,7 +15,7 @@ use argon2::{
 use async_trait::async_trait;
 
 use crate::domain::accounts::{
-    IdentityError,
+    AccountError,
     ports::PasswordHasher,
     values::{PasswordHash, PlaintextPassword},
 };
@@ -38,7 +38,7 @@ impl Argon2Provider {
 #[async_trait]
 impl PasswordHasher for Argon2Provider {
     /// Hashes a plaintext password securely using a randomly generated salt.
-    async fn hash(&self, password: &PlaintextPassword) -> Result<PasswordHash, IdentityError> {
+    async fn hash(&self, password: &PlaintextPassword) -> Result<PasswordHash, AccountError> {
         // We must extract the string to move it across the thread boundary
         let pass_str = password.as_str().to_owned();
 
@@ -55,11 +55,11 @@ impl PasswordHasher for Argon2Provider {
         .map_err(|_| {
             tracing::error!("Tokio blocking task panicked during password hashing");
             // If the thread panics, we fail secure and deny the operation
-            IdentityError::InvalidCredentials
+            AccountError::InvalidCredentials
         })?
         .map_err(|e| {
             tracing::error!("Argon2 hashing failed internally: {}", e);
-            IdentityError::InvalidCredentials
+            AccountError::InvalidCredentials
         })?;
 
         Ok(PasswordHash::new(hash_result))
@@ -70,7 +70,7 @@ impl PasswordHasher for Argon2Provider {
         &self,
         password: &PlaintextPassword,
         hash: &PasswordHash,
-    ) -> Result<bool, IdentityError> {
+    ) -> Result<bool, AccountError> {
         let pass_str = password.as_str().to_owned();
         let hash_str = hash.as_str().to_owned();
 
@@ -92,7 +92,7 @@ impl PasswordHasher for Argon2Provider {
         .await
         .map_err(|_| {
             tracing::error!("Tokio blocking task panicked during password verification");
-            IdentityError::InvalidCredentials
+            AccountError::InvalidCredentials
         })?;
 
         // We return Ok(is_valid) rather than an error on a mismatch,

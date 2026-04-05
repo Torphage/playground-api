@@ -27,15 +27,11 @@ DROP TABLE IF EXISTS system.feature_flags;
 DROP TABLE IF EXISTS system.settings;
 
 -- 3. Identity Schema
-DROP TABLE IF EXISTS identity.role_permissions;
-DROP TABLE IF EXISTS identity.permissions;
-DROP TABLE IF EXISTS identity.user_roles;
-DROP TABLE IF EXISTS identity.roles;
-DROP TABLE IF EXISTS identity.users;
-
--- 2. Audit
-DROP FUNCTION IF EXISTS audit.log_change();
-DROP TABLE IF EXISTS audit.logs;
+DROP TABLE IF EXISTS accounts.role_permissions;
+DROP TABLE IF EXISTS accounts.permissions;
+DROP TABLE IF EXISTS accounts.user_roles;
+DROP TABLE IF EXISTS accounts.roles;
+DROP TABLE IF EXISTS accounts.users;
 
 -- 1. Schemas
 DROP SCHEMA IF EXISTS app_kitchen;

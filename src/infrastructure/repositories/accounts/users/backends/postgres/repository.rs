@@ -34,7 +34,7 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
 
         sqlx::query!(
             r#"
-            INSERT INTO identity.users (id, username, email, password_hash, created_at, updated_at)
+            INSERT INTO accounts.users (id, username, email, password_hash, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (id) DO UPDATE
             SET email = EXCLUDED.email,
@@ -53,7 +53,7 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
         .map_err(|e| AppError::Infrastructure(format!("Failed to save user core: {e}")))?;
 
         sqlx::query!(
-            r#"DELETE FROM identity.user_roles WHERE user_id = $1"#,
+            r#"DELETE FROM accounts.user_roles WHERE user_id = $1"#,
             user_uuid
         )
         .execute(&mut **conn)
@@ -63,7 +63,7 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
         for role in &user.roles {
             sqlx::query!(
                 r#"
-                INSERT INTO identity.user_roles (user_id, role_id)
+                INSERT INTO accounts.user_roles (user_id, role_id)
                 VALUES ($1, $2)
                 "#,
                 user_uuid,
@@ -89,7 +89,7 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
         let user_row: Option<UserRow> = sqlx::query_as!(
             UserRow,
             r#"SELECT id, username, email, password_hash, created_at, updated_at
-               FROM identity.users WHERE id = $1"#,
+               FROM accounts.users WHERE id = $1"#,
             user_uuid
         )
         .fetch_optional(&mut **conn)
@@ -105,8 +105,8 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             RoleRow,
             r#"
             SELECT r.id, r.name
-            FROM identity.roles r
-            JOIN identity.user_roles ur ON r.id = ur.role_id
+            FROM accounts.roles r
+            JOIN accounts.user_roles ur ON r.id = ur.role_id
             WHERE ur.user_id = $1
             "#,
             user_uuid
@@ -119,8 +119,8 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             UserPermissionRow,
             r#"
             SELECT rp.permission_slug
-            FROM identity.role_permissions rp
-            JOIN identity.user_roles ur ON rp.role_id = ur.role_id
+            FROM accounts.role_permissions rp
+            JOIN accounts.user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             "#,
             user_uuid
@@ -145,7 +145,7 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
         let user_row: Option<UserRow> = sqlx::query_as!(
             UserRow,
             r#"SELECT id, username, email, password_hash, created_at, updated_at
-               FROM identity.users WHERE email = $1"#,
+               FROM accounts.users WHERE email = $1"#,
             email.as_str()
         )
         .fetch_optional(&mut **conn)
@@ -163,8 +163,8 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             RoleRow,
             r#"
             SELECT r.id, r.name
-            FROM identity.roles r
-            JOIN identity.user_roles ur ON r.id = ur.role_id
+            FROM accounts.roles r
+            JOIN accounts.user_roles ur ON r.id = ur.role_id
             WHERE ur.user_id = $1
             "#,
             user_uuid
@@ -177,8 +177,8 @@ impl<'a> UserRepository<PostgresTransaction<'a>> for PostgresUserRepository {
             UserPermissionRow,
             r#"
             SELECT rp.permission_slug
-            FROM identity.role_permissions rp
-            JOIN identity.user_roles ur ON rp.role_id = ur.role_id
+            FROM accounts.role_permissions rp
+            JOIN accounts.user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             "#,
             user_uuid

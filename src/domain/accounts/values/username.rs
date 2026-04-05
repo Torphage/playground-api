@@ -14,7 +14,7 @@ pub enum UsernameError {
 impl ErrorCode for UsernameError {
     fn error_code(&self) -> &'static str {
         match self {
-            Self::ValidationFailed => "IDENTITY_USERNAME_VALIDATION_FAILED",
+            Self::ValidationFailed => "ACCOUNT_USERNAME_VALIDATION_FAILED",
         }
     }
 }

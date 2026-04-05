@@ -3,12 +3,12 @@
 use std::sync::Arc;
 
 use crate::api::authentication::AuthenticatedIdentity;
+use crate::application::accounts::commands::me::change_my_password::Command;
 use crate::application::authorization::Authorizer;
 use crate::application::error::AppError;
-use crate::application::accounts::commands::me::change_my_password::Command;
 use crate::application::ports::{PrincipalLoader, Transaction, TransactionManager};
 use crate::domain::accounts::values::{Permission, PlaintextPassword};
-use crate::domain::accounts::{IdentityError, PasswordHasher, ports::UserRepository};
+use crate::domain::accounts::{AccountError, PasswordHasher, ports::UserRepository};
 
 pub struct Handler<TM, UR, PL> {
     tx_manager: TM,
@@ -50,7 +50,7 @@ where
     ) -> Result<(), AppError> {
         // Validation
         let new_password =
-            PlaintextPassword::try_from(command.new_password).map_err(IdentityError::from)?;
+            PlaintextPassword::try_from(command.new_password).map_err(AccountError::from)?;
 
         // Begin transaction
         let mut tx = self.tx_manager.begin().await?;
@@ -73,7 +73,7 @@ where
             .user_repo
             .find_by_id(&mut tx, &identity.user_id)
             .await?
-            .ok_or(IdentityError::AccountNotFound)?;
+            .ok_or(AccountError::AccountNotFound)?;
 
         // Check if the new password matches the current password
         if self
@@ -81,7 +81,7 @@ where
             .verify(&new_password, &user.password_hash)
             .await?
         {
-            return Err(IdentityError::PasswordMatchesCurrent.into());
+            return Err(AccountError::PasswordMatchesCurrent.into());
         }
 
         // Hash new password
