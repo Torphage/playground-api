@@ -23,15 +23,10 @@ impl Permission {
         &self.0
     }
 
-    pub const IDENTITY_USER_READ: &'static str = "identity.user.read";
-    pub const IDENTITY_USER_UPDATE: &'static str = "identity.user.update";
+    pub const IDENTITY_SELF_CHANGE_EMAIL: &'static str = "identity.self.change.email";
 
-    pub fn identity_user_read() -> Self {
-        Self::new(Self::IDENTITY_USER_READ)
-    }
-
-    pub fn identity_user_update() -> Self {
-        Self::new(Self::IDENTITY_USER_UPDATE)
+    pub fn identity_self_change_email() -> Self {
+        Self::new(Self::IDENTITY_SELF_CHANGE_EMAIL)
     }
 }
 
