@@ -14,9 +14,11 @@ tokio = { version = "1.50", features = ["full"] }
 
 # --- Web Framework & HTTP Middleware ---
 # axum: HTTP API framework and routing.
+# axum-extra:
 # tower: Service and middleware abstractions used by the web stack.
 # tower-http: Production-ready HTTP middleware such as tracing, CORS, and request IDs.
 axum = "0.8"
+axum-extra = { version = "0.12", features = ["cookie"] }
 tower = "0.5"
 tower-http = { version = "0.6", features = ["trace", "cors", "request-id", "util"] }
 
@@ -83,7 +85,6 @@ async-trait = "0.1"
 derive_more = { version = "2.1.1", features = ["display", "as_ref"] }
 email_address = "0.2.9"
 fred = "10.1"
-
 
 [dev-dependencies]
 # --- Testing ---
