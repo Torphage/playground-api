@@ -14,6 +14,7 @@ use std::env;
 /// The root configuration object containing all subsystem settings.
 #[derive(Debug, Clone)]
 pub struct AppConfig {
+    pub environment: Environment,
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
@@ -43,7 +44,19 @@ impl AppConfig {
             env::var(key).unwrap_or_else(|_| default.to_string())
         };
 
+        let environment = match get_env_or("APP_ENV", "development").as_str() {
+            "development" => Environment::Development,
+            "test" => Environment::Test,
+            "production" => Environment::Production,
+            other => {
+                return Err(format!(
+                    "CRITICAL: APP_ENV must be one of development, test, production. Got: {other}"
+                ));
+            }
+        };
+
         Ok(Self {
+            environment,
             server: ServerConfig {
                 host: get_env_or("SERVER_HOST", "0.0.0.0"),
                 port: get_env_or("SERVER_PORT", "3000")
@@ -91,6 +104,19 @@ impl AppConfig {
 // =========================================================================
 // SUBSYSTEM CONFIGURATIONS
 // =========================================================================
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Environment {
+    Development,
+    Test,
+    Production,
+}
+
+impl Environment {
+    pub fn is_production(self) -> bool {
+        matches!(self, Self::Production)
+    }
+}
 
 /// Configuration for the HTTP delivery layer.
 #[derive(Debug, Clone)]
