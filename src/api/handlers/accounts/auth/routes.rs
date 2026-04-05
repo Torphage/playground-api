@@ -7,6 +7,7 @@ use crate::api::AppState;
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/login", post(login::handler))
+        .route("/logout", post(logout::handler))
         .route("/register", post(register::handler))
         .route("/token", post(token::handler))
 }
