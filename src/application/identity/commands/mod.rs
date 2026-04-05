@@ -1,3 +1,3 @@
-mod register_user;
-
-pub use register_user::RegisterUserCommand;
+// pub mod register_user;
+pub mod auth;
+pub mod me;

@@ -25,21 +25,16 @@ impl RedisPrincipalCache {
     pub async fn get(&self, user_id: &UserId) -> Result<Option<Principal>, AppError> {
         let key = cache_key(user_id);
 
-        let payload: Option<String> = self.redis
-            .get(&key)
-            .await
-            .map_err(|e| AppError::Infrastructure(format!(
-                "Failed to fetch cached principal: {e}"
-            )))?;
+        let payload: Option<String> = self.redis.get(&key).await.map_err(|e| {
+            AppError::Infrastructure(format!("Failed to fetch cached principal: {e}"))
+        })?;
 
         let Some(payload) = payload else {
             return Ok(None);
         };
 
         let cached = serde_json::from_str::<RedisPrincipalEntry>(&payload).map_err(|e| {
-            AppError::Infrastructure(format!(
-                "Failed to deserialize cached principal: {e}"
-            ))
+            AppError::Infrastructure(format!("Failed to deserialize cached principal: {e}"))
         })?;
 
         cached.into_principal().map(Some)
@@ -50,7 +45,8 @@ impl RedisPrincipalCache {
         let payload = serde_json::to_string(&RedisPrincipalEntry::from_principal(principal))
             .map_err(|_| AppError::Internal)?;
 
-        let _: () = self.redis
+        let _: () = self
+            .redis
             .set(
                 key,
                 payload,
@@ -59,9 +55,7 @@ impl RedisPrincipalCache {
                 false,
             )
             .await
-            .map_err(|e| AppError::Infrastructure(format!(
-                "Failed to cache principal: {e}"
-            )))?;
+            .map_err(|e| AppError::Infrastructure(format!("Failed to cache principal: {e}")))?;
 
         Ok(())
     }
@@ -69,12 +63,9 @@ impl RedisPrincipalCache {
     pub async fn delete(&self, user_id: &UserId) -> Result<(), AppError> {
         let key = cache_key(user_id);
 
-        let _: i64 = self.redis
-            .del(key)
-            .await
-            .map_err(|e| AppError::Infrastructure(format!(
-                "Failed to invalidate cached principal: {e}"
-            )))?;
+        let _: i64 = self.redis.del(key).await.map_err(|e| {
+            AppError::Infrastructure(format!("Failed to invalidate cached principal: {e}"))
+        })?;
 
         Ok(())
     }
@@ -102,9 +93,7 @@ impl RedisPrincipalEntry {
 
     fn into_principal(self) -> Result<Principal, AppError> {
         let user_uuid = Uuid::parse_str(&self.user_id).map_err(|e| {
-            AppError::Infrastructure(format!(
-                "Cached principal user_id is not a valid UUID: {e}"
-            ))
+            AppError::Infrastructure(format!("Cached principal user_id is not a valid UUID: {e}"))
         })?;
 
         let permissions = self

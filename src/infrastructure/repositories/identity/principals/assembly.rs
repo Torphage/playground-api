@@ -22,5 +22,8 @@ pub fn assemble_principal(input: PrincipalAssemblyInput) -> Result<Principal, Ap
         .map(Permission::new)
         .collect::<HashSet<_>>();
 
-    Ok(Principal::new(UserId::from_uuid(input.user_id), permissions))
+    Ok(Principal::new(
+        UserId::from_uuid(input.user_id),
+        permissions,
+    ))
 }

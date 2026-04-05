@@ -40,11 +40,11 @@ impl<'a> PrincipalLoader<PostgresTransaction<'a>> for PostgresPrincipalLoader {
             "#,
             user_uuid
         )
-            .fetch_optional(&mut **conn)
-            .await
-            .map_err(|e| {
-                AppError::Infrastructure(format!("Failed to check principal existence: {e}"))
-            })?;
+        .fetch_optional(&mut **conn)
+        .await
+        .map_err(|e| {
+            AppError::Infrastructure(format!("Failed to check principal existence: {e}"))
+        })?;
 
         if user_exists.is_none() {
             return Ok(None);
@@ -60,11 +60,11 @@ impl<'a> PrincipalLoader<PostgresTransaction<'a>> for PostgresPrincipalLoader {
             "#,
             user_uuid
         )
-            .fetch_all(&mut **conn)
-            .await
-            .map_err(|e| {
-                AppError::Infrastructure(format!("Failed to fetch principal permissions: {e}"))
-            })?;
+        .fetch_all(&mut **conn)
+        .await
+        .map_err(|e| {
+            AppError::Infrastructure(format!("Failed to fetch principal permissions: {e}"))
+        })?;
 
         let input = map_permission_rows(user_id, permission_rows);
         let principal = assemble_principal(input)?;
