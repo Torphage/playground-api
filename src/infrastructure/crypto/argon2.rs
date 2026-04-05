@@ -14,7 +14,7 @@ use argon2::{
 };
 use async_trait::async_trait;
 
-use crate::domain::identity::{
+use crate::domain::accounts::{
     IdentityError,
     ports::PasswordHasher,
     values::{PasswordHash, PlaintextPassword},

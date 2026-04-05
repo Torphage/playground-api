@@ -27,10 +27,10 @@ use crate::infrastructure::db::postgres::{
     PostgresTransactionManager, build_postgres_pool, run_postgres_migrations,
 };
 use crate::infrastructure::db::redis::build_redis_client;
-use crate::infrastructure::repositories::identity::principals::{
+use crate::infrastructure::repositories::accounts::principals::{
     CacheBackedPrincipalLoader, RedisPrincipalCache,
 };
-use crate::infrastructure::repositories::identity::{
+use crate::infrastructure::repositories::accounts::{
     PostgresPrincipalLoader, PostgresUserRepository,
 };
 

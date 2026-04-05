@@ -4,7 +4,7 @@ use jsonwebtoken::{EncodingKey, Header, encode};
 use crate::application::error::AppError;
 use crate::application::ports::TokenGenerator;
 use crate::config::JwtConfig;
-use crate::domain::identity::entities::User;
+use crate::domain::accounts::entities::User;
 
 use super::Claims;
 

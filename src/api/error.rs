@@ -6,7 +6,7 @@
 //! JSON error envelope expected by the frontend for localization.
 
 use crate::application::error::AppError;
-use crate::domain::identity::IdentityError;
+use crate::domain::accounts::IdentityError;
 use crate::domain::shared::ErrorCode;
 use axum::{
     Json,

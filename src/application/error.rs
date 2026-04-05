@@ -7,7 +7,7 @@
 use serde_json::{Value, json};
 use thiserror::Error;
 
-use crate::domain::identity::IdentityError;
+use crate::domain::accounts::IdentityError;
 use crate::domain::shared::ErrorCode;
 
 /// The global error type for the application workflow.

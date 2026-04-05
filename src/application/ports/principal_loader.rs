@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::application::authorization::Principal;
 use crate::application::error::AppError;
-use crate::domain::identity::values::UserId;
+use crate::domain::accounts::values::UserId;
 
 /// Loads a `Principal` inside an application workflow.
 #[async_trait]

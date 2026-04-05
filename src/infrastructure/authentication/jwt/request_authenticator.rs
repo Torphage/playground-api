@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::api::authentication::AuthenticatedIdentity;
 use crate::api::authentication::RequestAuthenticator;
 use crate::application::error::AppError;
-use crate::domain::identity::values::UserId;
+use crate::domain::accounts::values::UserId;
 
 use super::JwtVerifier;
 

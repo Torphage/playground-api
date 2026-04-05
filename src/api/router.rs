@@ -31,7 +31,7 @@ pub fn create_router(state: AppState, cors_settings: CorsConfig) -> Router {
 
     // Apply to Router
     Router::new()
-        .nest("/", handlers::identity::routes::routes())
+        .nest("/", handlers::accounts::routes::routes())
         .with_state(state)
         .layer(cors)
         .layer(NewSentryLayer::new_from_top())

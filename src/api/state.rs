@@ -14,8 +14,8 @@ use crate::config::AppConfig;
 use crate::infrastructure::authentication::session::FredSessionStore;
 use crate::infrastructure::crypto::Argon2Provider;
 use crate::infrastructure::db::postgres::PostgresTransactionManager;
-use crate::infrastructure::repositories::identity::principals::CacheBackedPrincipalLoader;
-use crate::infrastructure::repositories::identity::{
+use crate::infrastructure::repositories::accounts::principals::CacheBackedPrincipalLoader;
+use crate::infrastructure::repositories::accounts::{
     PostgresPrincipalLoader, PostgresUserRepository,
 };
 

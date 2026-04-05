@@ -1,7 +1,7 @@
 //! Application-facing authorization abstraction.
 
 use crate::application::error::AppError;
-use crate::domain::identity::values::Permission;
+use crate::domain::accounts::values::Permission;
 
 use super::principal::Principal;
 

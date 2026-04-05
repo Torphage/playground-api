@@ -3,7 +3,7 @@
 //! This is intentionally small. It represents the caller identity established
 //! at the request boundary, before loading a richer authorization principal.
 
-use crate::domain::identity::values::UserId;
+use crate::domain::accounts::values::UserId;
 
 /// A successfully authenticated caller identity.
 #[derive(Debug, Clone, PartialEq, Eq)]

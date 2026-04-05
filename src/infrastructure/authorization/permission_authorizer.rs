@@ -2,7 +2,7 @@
 
 use crate::application::authorization::Authorizer;
 use crate::application::authorization::Principal;
-use crate::domain::identity::values::Permission;
+use crate::domain::accounts::values::Permission;
 
 /// Simple permission presence checker.
 #[derive(Debug, Clone, Default)]
