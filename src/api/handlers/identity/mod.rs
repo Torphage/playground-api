@@ -1,4 +1,4 @@
-mod register_user;
-mod routes;
-
-pub use routes::routes;
+mod auth;
+pub mod me;
+pub mod routes;
+pub mod users;
