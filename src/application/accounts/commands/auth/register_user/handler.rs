@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
+use crate::application::accounts::commands::auth::register_user::RegisterCommand;
 use crate::application::error::AppError;
-use crate::application::accounts::commands::auth::register_user::Command;
 use crate::application::ports::{Transaction, TransactionManager};
 use crate::domain::accounts::{
     AccountError,
@@ -16,13 +16,13 @@ use crate::domain::accounts::{
 ///
 /// This handler owns its dependencies, which keeps the call-site small and
 /// avoids lifetime-bearing handler types.
-pub struct Handler<TM, UR> {
+pub struct RegisterHandler<TM, UR> {
     tx_manager: TM,
     user_repo: Arc<UR>,
     password_hasher: Arc<dyn PasswordHasher>,
 }
 
-impl<TM, UR> Handler<TM, UR> {
+impl<TM, UR> RegisterHandler<TM, UR> {
     /// Creates a new handler instance.
     pub fn new(
         tx_manager: TM,
@@ -37,7 +37,7 @@ impl<TM, UR> Handler<TM, UR> {
     }
 }
 
-impl<TM, UR> Handler<TM, UR>
+impl<TM, UR> RegisterHandler<TM, UR>
 where
     TM: TransactionManager,
     for<'tx> UR: UserRepository<TM::Tx<'tx>>,

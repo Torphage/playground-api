@@ -4,7 +4,7 @@
 ///
 /// Commands contain raw, unvalidated primitive data. Validation is performed
 /// by the application handler.
-pub struct Command {
+pub struct RegisterCommand {
     pub username: String,
     pub email: String,
     pub password: String,

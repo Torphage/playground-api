@@ -10,7 +10,9 @@ use uuid::Uuid;
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::register_user::{Command, Handler};
+use crate::application::accounts::commands::auth::register_user::{
+    RegisterCommand, RegisterHandler,
+};
 
 /// The expected JSON payload for a registration request.
 #[derive(Deserialize)]
@@ -27,7 +29,7 @@ pub struct RegisterResponse {
     pub message: &'static str,
 }
 
-impl From<RegisterRequest> for Command {
+impl From<RegisterRequest> for RegisterCommand {
     fn from(req: RegisterRequest) -> Self {
         Self {
             username: req.username,
@@ -42,9 +44,9 @@ pub async fn handler(
     State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<RegisterResponse>, ApiError> {
-    let command = Command::from(payload);
+    let command = RegisterCommand::from(payload);
 
-    let handler = Handler::new(
+    let handler = RegisterHandler::new(
         state.tx_manager.clone(),
         state.repos.user.clone(),
         state.crypto.password_hasher.clone(),
