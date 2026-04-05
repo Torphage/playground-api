@@ -1,5 +1,6 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{EncodingKey, Header, encode};
+use uuid::Uuid;
 
 use crate::application::error::AppError;
 use crate::application::ports::TokenGenerator;
@@ -11,14 +12,18 @@ use super::Claims;
 /// A concrete implementation of the `TokenGenerator` using HS256 JWTs.
 pub struct JwtProvider {
     encoding_key: EncodingKey,
-    expiration_hours: i64,
+    issuer: String,
+    audience: String,
+    access_ttl_seconds: i64,
 }
 
 impl JwtProvider {
     pub fn new(config: &JwtConfig) -> Self {
         Self {
             encoding_key: EncodingKey::from_secret(config.secret.as_bytes()),
-            expiration_hours: 24,
+            issuer: config.issuer.clone(),
+            audience: config.audience.clone(),
+            access_ttl_seconds: config.access_ttl_seconds,
         }
     }
 }
@@ -26,14 +31,17 @@ impl JwtProvider {
 impl TokenGenerator for JwtProvider {
     fn generate_token(&self, user: &User) -> Result<String, AppError> {
         let now = Utc::now();
-        let expiration = now + Duration::hours(self.expiration_hours);
+        let expiration = now + Duration::seconds(self.access_ttl_seconds);
 
         let role_slugs: Vec<String> = user.roles.iter().map(|r| r.id.clone()).collect();
 
         let claims = Claims {
+            iss: self.issuer.clone(),
+            aud: self.audience.clone(),
             sub: user.id.as_uuid().to_string(),
             iat: now.timestamp() as usize,
             exp: expiration.timestamp() as usize,
+            jti: Uuid::new_v4().to_string(),
             roles: role_slugs,
         };
 

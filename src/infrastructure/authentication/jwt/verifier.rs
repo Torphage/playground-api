@@ -16,6 +16,8 @@ impl JwtVerifier {
     pub fn new(config: &JwtConfig) -> Self {
         let mut validation = Validation::new(Algorithm::HS256);
         validation.validate_exp = true;
+        validation.set_issuer(&[config.issuer.as_str()]);
+        validation.set_audience(&[config.audience.as_str()]);
 
         Self {
             decoding_key: DecodingKey::from_secret(config.secret.as_bytes()),

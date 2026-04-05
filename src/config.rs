@@ -77,6 +77,13 @@ impl AppConfig {
             authentication: AuthenticationConfig {
                 jwt: JwtConfig {
                     secret: get_env("AUTH_JWT_SECRET")?,
+                    issuer: get_env_or("AUTH_JWT_ISSUER", "my-app"),
+                    audience: get_env_or("AUTH_JWT_AUDIENCE", "my-app-api"),
+                    access_ttl_seconds: get_env_or("AUTH_JWT_ACCESS_TTL_SECONDS", "900")
+                        .parse()
+                        .map_err(|_| {
+                            "CRITICAL: AUTH_JWT_ACCESS_TTL_SECONDS must be a valid i64".to_string()
+                        })?,
                 },
                 session: SessionConfig {
                     cookie_name: get_env_or("AUTH_SESSION_COOKIE_NAME", "sid"),
@@ -171,6 +178,15 @@ pub struct AuthenticationConfig {
 pub struct JwtConfig {
     /// The cryptographic secret used for signing JWTs.
     pub secret: String,
+
+    /// The logical issuer of the JWTs produced by this API.
+    pub issuer: String,
+
+    /// The intended audience of the JWTs produced by this API.
+    pub audience: String,
+
+    /// Access-token lifetime in seconds.
+    pub access_ttl_seconds: i64,
 }
 
 #[derive(Debug, Clone)]
