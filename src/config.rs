@@ -85,6 +85,14 @@ impl AppConfig {
                         .map_err(|_| {
                             "CRITICAL: AUTH_SESSION_TTL_SECONDS must be a valid u64".to_string()
                         })?,
+                    secure_cookie: get_env_or(
+                        "AUTH_SESSION_SECURE_COOKIE",
+                        &environment.is_production().to_string(),
+                    )
+                    .parse()
+                    .map_err(|_| {
+                        "CRITICAL: AUTH_SESSION_SECURE_COOKIE must be true or false".to_string()
+                    })?,
                 },
             },
             cors: CorsConfig {
@@ -172,6 +180,9 @@ pub struct SessionConfig {
 
     /// Session lifetime in seconds.
     pub ttl_seconds: u64,
+
+    /// Whether to use secure cookies (HTTPS-only).
+    pub secure_cookie: bool,
 }
 
 /// Configuration for Cross-Origin Resource Sharing.
