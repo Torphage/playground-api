@@ -27,6 +27,9 @@ use crate::infrastructure::db::postgres::{
     PostgresTransactionManager, build_postgres_pool, run_postgres_migrations,
 };
 use crate::infrastructure::db::redis::build_redis_client;
+use crate::infrastructure::repositories::identity::principals::{
+    CacheBackedPrincipalLoader, RedisPrincipalCache,
+};
 use crate::infrastructure::repositories::identity::{
     PostgresPrincipalLoader, PostgresUserRepository,
 };
@@ -68,8 +71,15 @@ fn build_state(
     redis_client: crate::infrastructure::db::redis::RedisClient,
     config: Arc<AppConfig>,
 ) -> AppState {
+    let postgres_principal_loader = Arc::new(PostgresPrincipalLoader::new());
+    let redis_principal_cache = Arc::new(RedisPrincipalCache::new(redis_client.clone(), 300));
+    let principal_loader = Arc::new(CacheBackedPrincipalLoader::new(
+        postgres_principal_loader,
+        redis_principal_cache,
+    ));
+
     let repos = Repositories {
-        principal: Arc::new(PostgresPrincipalLoader::new()),
+        principal: principal_loader,
         user: Arc::new(PostgresUserRepository::new()),
     };
 

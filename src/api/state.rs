@@ -9,11 +9,12 @@ use axum::extract::FromRef;
 
 use crate::api::authentication::RequestAuthenticator;
 use crate::application::authorization::Authorizer;
-use crate::application::ports::TokenGenerator;
+use crate::application::ports::{PrincipalLoader, TokenGenerator};
 use crate::config::AppConfig;
 use crate::infrastructure::authentication::session::FredSessionStore;
 use crate::infrastructure::crypto::Argon2Provider;
 use crate::infrastructure::db::postgres::PostgresTransactionManager;
+use crate::infrastructure::repositories::identity::principals::CacheBackedPrincipalLoader;
 use crate::infrastructure::repositories::identity::{
     PostgresPrincipalLoader, PostgresUserRepository,
 };
@@ -22,7 +23,7 @@ use crate::infrastructure::repositories::identity::{
 #[derive(Clone)]
 pub struct Repositories {
     /// Concrete PostgreSQL-backed principal loader.
-    pub principal: Arc<PostgresPrincipalLoader>,
+    pub principal: Arc<CacheBackedPrincipalLoader<PostgresPrincipalLoader>>,
 
     /// Concrete PostgreSQL-backed user repository.
     pub user: Arc<PostgresUserRepository>,

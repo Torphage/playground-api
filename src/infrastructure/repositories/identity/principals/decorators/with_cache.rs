@@ -37,11 +37,7 @@ where
     Tx: Send,
     Inner: PrincipalLoader<Tx> + Send + Sync,
 {
-    async fn load(
-        &self,
-        tx: &mut Tx,
-        user_id: &UserId,
-    ) -> Result<Option<Principal>, AppError> {
+    async fn load(&self, tx: &mut Tx, user_id: &UserId) -> Result<Option<Principal>, AppError> {
         if let Some(principal) = self.cache.get(user_id).await? {
             return Ok(Some(principal));
         }
