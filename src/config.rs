@@ -15,6 +15,7 @@ use std::env;
 #[derive(Debug, Clone)]
 pub struct AppConfig {
     pub environment: Environment,
+    pub startup: StartupConfig,
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub redis: RedisConfig,
@@ -57,6 +58,11 @@ impl AppConfig {
 
         Ok(Self {
             environment,
+            startup: StartupConfig {
+                run_migrations: get_env_or("RUN_MIGRATIONS", "false")
+                    .parse()
+                    .unwrap_or(false),
+            },
             server: ServerConfig {
                 host: get_env_or("SERVER_HOST", "0.0.0.0"),
                 port: get_env_or("SERVER_PORT", "3000")
@@ -75,6 +81,11 @@ impl AppConfig {
                 url: get_env("REDIS_URL")?,
             },
             authentication: AuthenticationConfig {
+                principal_cache_ttl_seconds: get_env_or("AUTH_PRINCIPAL_CACHE_TTL_SECONDS", "3600")
+                    .parse()
+                    .map_err(|_| {
+                        "CRITICAL: AUTH_PRINCIPAL_CACHE_TTL_SECONDS must be a valid u64".to_string()
+                    })?,
                 jwt: JwtConfig {
                     secret: get_env("AUTH_JWT_SECRET")?,
                     issuer: get_env_or("AUTH_JWT_ISSUER", "my-app"),
@@ -83,6 +94,11 @@ impl AppConfig {
                         .parse()
                         .map_err(|_| {
                             "CRITICAL: AUTH_JWT_ACCESS_TTL_SECONDS must be a valid i64".to_string()
+                        })?,
+                    refresh_ttl_seconds: get_env_or("AUTH_JWT_REFRESH_TTL_SECONDS", "2592000")
+                        .parse()
+                        .map_err(|_| {
+                            "CRITICAL: AUTH_JWT_REFRESH_TTL_SECONDS must be a valid i64".to_string()
                         })?,
                 },
                 session: SessionConfig {
@@ -147,6 +163,12 @@ impl ServerConfig {
     }
 }
 
+/// Configuration for the application startup process.
+#[derive(Debug, Clone)]
+pub struct StartupConfig {
+    pub run_migrations: bool,
+}
+
 /// Configuration for the primary PostgreSQL data store.
 #[derive(Debug, Clone)]
 pub struct DatabaseConfig {
@@ -171,6 +193,9 @@ pub struct AuthenticationConfig {
 
     /// Session-auth configuration.
     pub session: SessionConfig,
+
+    /// Principal cache TTL in seconds.
+    pub principal_cache_ttl_seconds: u64,
 }
 
 /// Configuration for JSON Web Tokens (JWTs).
@@ -187,6 +212,9 @@ pub struct JwtConfig {
 
     /// Access-token lifetime in seconds.
     pub access_ttl_seconds: i64,
+
+    /// Refresh-token lifetime in seconds.
+    pub refresh_ttl_seconds: i64,
 }
 
 #[derive(Debug, Clone)]
