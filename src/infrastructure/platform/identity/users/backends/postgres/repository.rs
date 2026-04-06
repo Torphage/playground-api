@@ -3,13 +3,13 @@
 use async_trait::async_trait;
 
 use crate::application::error::AppError;
-use crate::domain::accounts::{
+use crate::domain::platform::identity::{
     entities::User,
     ports::UserRepository,
     values::{Email, UserId},
 };
 use crate::infrastructure::db::postgres::PostgresTransaction;
-use crate::infrastructure::repositories::accounts::users::assembly::assemble_user;
+use crate::infrastructure::platform::identity::users::assembly::assemble_user;
 
 use super::mapper::map_user_rows;
 use super::rows::{RoleRow, UserPermissionRow, UserRow};

@@ -1,6 +1,6 @@
 //! PostgreSQL-specific mapping into backend-neutral user assembly input.
 
-use crate::infrastructure::repositories::accounts::users::assembly::{
+use crate::infrastructure::platform::identity::users::assembly::{
     RoleAssemblyInput, UserAssemblyInput,
 };
 
