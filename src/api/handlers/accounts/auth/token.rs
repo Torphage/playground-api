@@ -1,13 +1,11 @@
-//! HTTP handler for password-based JWT issuance.
+//! HTTP handler for password-based access-token issuance.
 
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::issue_token::{
-    IssueTokenCommand, IssueTokenHandler,
-};
+use crate::application::accounts::commands::auth::issue_access_token::IssueTokenCommand;
 
 /// The expected JSON payload for token issuance.
 #[derive(Debug, Deserialize)]
@@ -20,6 +18,7 @@ pub struct TokenRequest {
 #[derive(Debug, Serialize)]
 pub struct TokenResponse {
     pub access_token: String,
+    pub refresh_token: String,
     pub token_type: &'static str,
     pub expires_in: i64,
 }
@@ -40,18 +39,12 @@ pub async fn handler(
 ) -> Result<Json<TokenResponse>, ApiError> {
     let command = IssueTokenCommand::from(payload);
 
-    let issue_token = IssueTokenHandler::new(
-        state.tx_manager.clone(),
-        state.repos.user.clone(),
-        state.crypto.password_hasher.clone(),
-        state.token_issuance.token_generator.clone(),
-    );
-
-    let access_token = issue_token.handle(command).await?;
+    let tokens = state.apps.accounts.auth.issue_token.handle(command).await?;
 
     Ok(Json(TokenResponse {
-        access_token,
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
         token_type: "Bearer",
-        expires_in: state.config.authentication.jwt.access_ttl_seconds,
+        expires_in: tokens.expires_in,
     }))
 }
