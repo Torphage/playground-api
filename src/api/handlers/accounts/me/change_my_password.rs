@@ -1,7 +1,7 @@
 use crate::api::authentication::CurrentIdentity;
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::me::change_my_password::{Command, Handler};
+use crate::application::accounts::commands::me::change_my_password::Command;
 use axum::http::StatusCode;
 use axum::{Json, extract::State};
 use serde::Deserialize;
@@ -23,20 +23,18 @@ impl From<ChangeMyPasswordRequest> for Command {
 /// Handles the request to change the current user's password.
 pub async fn handler(
     State(state): State<AppState>,
-    CurrentIdentity(identity): CurrentIdentity,
+    current_identity: CurrentIdentity,
     Json(payload): Json<ChangeMyPasswordRequest>,
 ) -> Result<StatusCode, ApiError> {
     let command = Command::from(payload);
 
-    let handler = Handler::new(
-        state.tx_manager.clone(),
-        state.repos.user.clone(),
-        state.repos.principal.clone(),
-        state.crypto.password_hasher.clone(),
-        state.authorization.authorizer.clone(),
-    );
-
-    handler.handle(&identity, command).await?;
+    state
+        .apps
+        .accounts
+        .me
+        .change_my_password
+        .handle(current_identity.identity(), command)
+        .await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

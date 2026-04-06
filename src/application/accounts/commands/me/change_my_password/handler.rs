@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use crate::api::authentication::AuthenticatedIdentity;
 use crate::application::accounts::commands::me::change_my_password::Command;
+use crate::application::authentication::AuthenticatedIdentity;
 use crate::application::authorization::Authorizer;
 use crate::application::error::AppError;
 use crate::application::ports::{PrincipalLoader, Transaction, TransactionManager};
@@ -58,7 +58,7 @@ where
         // Authentication
         let principal = self
             .principal_loader
-            .load(&mut tx, &identity.user_id)
+            .load(&mut tx, identity.user_id())
             .await?
             .ok_or_else(|| {
                 AppError::Authentication("Authenticated user no longer exists".into())
@@ -71,7 +71,7 @@ where
         // Load user
         let mut user = self
             .user_repo
-            .find_by_id(&mut tx, &identity.user_id)
+            .find_by_id(&mut tx, identity.user_id())
             .await?
             .ok_or(AccountError::AccountNotFound)?;
 
