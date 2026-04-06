@@ -2,12 +2,12 @@
 
 use async_trait::async_trait;
 
-use crate::application::authorization::Principal;
 use crate::application::error::AppError;
-use crate::application::ports::PrincipalLoader;
-use crate::domain::accounts::values::UserId;
+use crate::application::platform::authorization::Principal;
+use crate::application::platform::authorization::ports::PrincipalLoader;
+use crate::domain::platform::identity::values::UserId;
 use crate::infrastructure::db::postgres::PostgresTransaction;
-use crate::infrastructure::repositories::accounts::principals::assembly::assemble_principal;
+use crate::infrastructure::platform::authorization::principals::assembly::assemble_principal;
 
 use super::mapper::map_permission_rows;
 use super::rows::PrincipalPermissionRow;

@@ -6,9 +6,9 @@ use fred::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::application::authorization::Principal;
 use crate::application::error::AppError;
-use crate::domain::accounts::values::{Permission, UserId};
+use crate::application::platform::authorization::Principal;
+use crate::domain::platform::identity::values::{Permission, UserId};
 use crate::infrastructure::db::redis::RedisClient;
 
 #[derive(Clone)]

@@ -1,7 +1,7 @@
 //! PostgreSQL-specific mapping into backend-neutral principal assembly input.
 
-use crate::domain::accounts::values::UserId;
-use crate::infrastructure::repositories::accounts::principals::assembly::PrincipalAssemblyInput;
+use crate::domain::platform::identity::values::UserId;
+use crate::infrastructure::platform::authorization::principals::assembly::PrincipalAssemblyInput;
 
 use super::rows::PrincipalPermissionRow;
 

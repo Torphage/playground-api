@@ -4,9 +4,9 @@ use std::collections::HashSet;
 
 use uuid::Uuid;
 
-use crate::application::authorization::Principal;
 use crate::application::error::AppError;
-use crate::domain::accounts::values::{Permission, UserId};
+use crate::application::platform::authorization::Principal;
+use crate::domain::platform::identity::values::{Permission, UserId};
 
 /// Backend-neutral persistence input for assembling a `Principal`.
 pub struct PrincipalAssemblyInput {

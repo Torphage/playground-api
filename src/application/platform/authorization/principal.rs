@@ -1,4 +1,4 @@
-use crate::domain::accounts::values::{Permission, UserId};
+use crate::domain::platform::identity::values::{Permission, UserId};
 use std::collections::HashSet;
 
 #[derive(Debug, Clone)]

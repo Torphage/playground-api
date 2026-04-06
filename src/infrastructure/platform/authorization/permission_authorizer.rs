@@ -1,8 +1,8 @@
 //! Permission-based authorization adapter.
 
-use crate::application::authorization::Authorizer;
-use crate::application::authorization::Principal;
-use crate::domain::accounts::values::Permission;
+use crate::application::platform::authorization::Authorizer;
+use crate::application::platform::authorization::Principal;
+use crate::domain::platform::identity::values::Permission;
 
 /// Simple permission presence checker.
 #[derive(Debug, Clone, Default)]

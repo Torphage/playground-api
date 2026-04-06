@@ -4,11 +4,11 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
-use crate::application::authorization::Principal;
 use crate::application::error::AppError;
-use crate::application::ports::PrincipalLoader;
-use crate::domain::accounts::values::UserId;
-use crate::infrastructure::repositories::accounts::principals::caches::redis::RedisPrincipalCache;
+use crate::application::platform::authorization::Principal;
+use crate::application::platform::authorization::ports::PrincipalLoader;
+use crate::domain::platform::identity::values::UserId;
+use crate::infrastructure::platform::authorization::principals::caches::redis::RedisPrincipalCache;
 
 /// Decorates any `PrincipalLoader` with a Redis cache.
 #[derive(Clone)]
