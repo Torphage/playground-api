@@ -8,11 +8,15 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use axum::http::request::Parts;
 
-use crate::api::authentication::AuthenticatedIdentity;
-use crate::api::authentication::RequestAuthenticator;
+use crate::api::authentication::{AuthenticationOutcome, RequestAuthenticator};
 use crate::application::error::AppError;
 
 /// Tries several authentication methods in sequence.
+///
+/// Policy:
+/// - The first successful authentication wins.
+/// - `NotPresent` falls through to the next authenticator.
+/// - Any error stops the chain immediately.
 #[derive(Clone, Default)]
 pub struct CompositeRequestAuthenticator {
     authenticators: Vec<Arc<dyn RequestAuthenticator>>,
@@ -20,23 +24,8 @@ pub struct CompositeRequestAuthenticator {
 
 impl CompositeRequestAuthenticator {
     /// Creates an empty composite authenticator.
-    pub fn new() -> Self {
-        Self {
-            authenticators: Vec::new(),
-        }
-    }
-
-    /// Creates a composite authenticator from a pre-built list.
-    pub fn with_authenticators(authenticators: Vec<Arc<dyn RequestAuthenticator>>) -> Self {
+    pub fn new(authenticators: Vec<Arc<dyn RequestAuthenticator>>) -> Self {
         Self { authenticators }
-    }
-
-    /// Appends an authenticator to the chain.
-    ///
-    /// Authenticators are tried in insertion order.
-    pub fn push(mut self, authenticator: Arc<dyn RequestAuthenticator>) -> Self {
-        self.authenticators.push(authenticator);
-        self
     }
 
     /// Returns true if no authenticators have been configured.
@@ -47,15 +36,16 @@ impl CompositeRequestAuthenticator {
 
 #[async_trait]
 impl RequestAuthenticator for CompositeRequestAuthenticator {
-    async fn authenticate(&self, parts: &Parts) -> Result<Option<AuthenticatedIdentity>, AppError> {
+    async fn authenticate(&self, parts: &Parts) -> Result<AuthenticationOutcome, AppError> {
         for authenticator in &self.authenticators {
-            match authenticator.authenticate(parts).await {
-                Ok(Some(identity)) => return Ok(Some(identity)),
-                Ok(None) => continue,
-                Err(err) => return Err(err),
+            match authenticator.authenticate(parts).await? {
+                AuthenticationOutcome::Authenticated(identity) => {
+                    return Ok(AuthenticationOutcome::Authenticated(identity));
+                }
+                AuthenticationOutcome::NotPresent => continue,
             }
         }
 
-        Ok(None)
+        Ok(AuthenticationOutcome::NotPresent)
     }
 }
