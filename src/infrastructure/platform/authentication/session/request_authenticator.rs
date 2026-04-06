@@ -6,10 +6,10 @@ use async_trait::async_trait;
 use axum::http::{header::COOKIE, request::Parts};
 use uuid::Uuid;
 
-use crate::api::authentication::AuthenticatedIdentity;
+use crate::application::platform::authentication::AuthenticatedIdentity;
 use crate::api::authentication::RequestAuthenticator;
 use crate::application::error::AppError;
-use crate::domain::accounts::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 
 use super::fred_store::FredSessionStore;
 

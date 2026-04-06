@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::domain::accounts::values::UserId;
+use crate::domain::platform::::values::UserId;
 
 /// Stored refresh-token lifecycle state.
 ///

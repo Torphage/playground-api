@@ -5,10 +5,10 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::application::ports::{
+use crate::application::platform::authentication::ports::{
     NewRefreshTokenRecord, RefreshTokenRecord, RefreshTokenRepository,
 };
-use crate::domain::accounts::values::UserId;
+use crate::domain::platform::::values::UserId;
 use crate::infrastructure::db::postgres::PostgresTransaction;
 
 use super::rows::RefreshTokenRow;

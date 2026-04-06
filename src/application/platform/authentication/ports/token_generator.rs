@@ -1,7 +1,7 @@
 //! Access-token issuance contract.
 
 use crate::application::error::AppError;
-use crate::domain::accounts::values::UserId;
+use crate::domain::platform::::values::UserId;
 
 /// A newly issued access token plus its client-facing lifetime metadata.
 #[derive(Debug, Clone)]

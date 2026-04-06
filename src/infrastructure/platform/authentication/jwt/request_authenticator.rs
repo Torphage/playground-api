@@ -3,9 +3,9 @@ use axum::http::{header::AUTHORIZATION, request::Parts};
 use uuid::Uuid;
 
 use crate::api::authentication::{AuthenticationOutcome, RequestAuthenticator};
-use crate::application::authentication::AuthenticatedIdentity;
 use crate::application::error::AppError;
-use crate::domain::accounts::values::UserId;
+use crate::application::platform::authentication::AuthenticatedIdentity;
+use crate::domain::platform::identity::values::UserId;
 
 use super::JwtVerifier;
 

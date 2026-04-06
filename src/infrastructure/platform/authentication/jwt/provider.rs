@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::application::error::AppError;
 use crate::application::ports::{IssuedAccessToken, TokenGenerator};
 use crate::config::JwtConfig;
-use crate::domain::accounts::values::UserId;
+use crate::domain::platform::::values::UserId;
 
 use super::Claims;
 
