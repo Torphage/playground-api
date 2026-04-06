@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 /// The data payload embedded inside the JWT.
 ///
-/// These fields follow RFC 7519 standard JWT claims, plus one custom claim
-/// (`roles`) kept for compatibility with the current design.
-#[derive(Debug, Serialize, Deserialize)]
+/// These are standard JWT claims used for validating and identifying the
+/// authenticated caller.
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     /// Issuer
     pub iss: String,
@@ -15,15 +15,12 @@ pub struct Claims {
     /// Subject (the user's unique identifier)
     pub sub: String,
 
-    /// Issued at
-    pub iat: usize,
+    /// Issued at (Unix timestamp, seconds)
+    pub iat: i64,
 
-    /// Expiration time
-    pub exp: usize,
+    /// Expiration time (Unix timestamp, seconds)
+    pub exp: i64,
 
     /// JWT ID
     pub jti: String,
-
-    /// Custom claim: the user's assigned roles
-    pub roles: Vec<String>,
 }

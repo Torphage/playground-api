@@ -1,11 +1,11 @@
 use chrono::{Duration, Utc};
-use jsonwebtoken::{EncodingKey, Header, encode};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::application::ports::TokenGenerator;
+use crate::application::ports::{IssuedAccessToken, TokenGenerator};
 use crate::config::JwtConfig;
-use crate::domain::accounts::entities::User;
+use crate::domain::accounts::values::UserId;
 
 use super::Claims;
 
@@ -29,27 +29,29 @@ impl JwtProvider {
 }
 
 impl TokenGenerator for JwtProvider {
-    fn generate_token(&self, user: &User) -> Result<String, AppError> {
+    fn generate_token(&self, user_id: &UserId) -> Result<IssuedAccessToken, AppError> {
         let now = Utc::now();
         let expiration = now + Duration::seconds(self.access_ttl_seconds);
-
-        let role_slugs: Vec<String> = user.roles.iter().map(|r| r.id.clone()).collect();
 
         let claims = Claims {
             iss: self.issuer.clone(),
             aud: self.audience.clone(),
-            sub: user.id.as_uuid().to_string(),
-            iat: now.timestamp() as usize,
-            exp: expiration.timestamp() as usize,
+            sub: user_id.as_uuid().to_string(),
+            iat: now.timestamp(),
+            exp: expiration.timestamp(),
             jti: Uuid::new_v4().to_string(),
-            roles: role_slugs,
         };
 
-        let token = encode(&Header::default(), &claims, &self.encoding_key).map_err(|e| {
+        let header = Header::new(Algorithm::HS256);
+
+        let token = encode(&header, &claims, &self.encoding_key).map_err(|e| {
             tracing::error!("Failed to generate JWT: {}", e);
             AppError::Infrastructure("Failed to sign authentication token".into())
         })?;
 
-        Ok(token)
+        Ok(IssuedAccessToken {
+            token,
+            expires_in: self.access_ttl_seconds,
+        })
     }
 }

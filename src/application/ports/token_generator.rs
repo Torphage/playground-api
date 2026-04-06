@@ -1,19 +1,20 @@
-//! Session and token generation contracts.
-//!
-//! Defines the interface for issuing access tokens to authenticated users.
+//! Access-token issuance contract.
 
 use crate::application::error::AppError;
-use crate::domain::accounts::entities::User;
+use crate::domain::accounts::values::UserId;
 
-// =========================================================================
-// TOKEN GENERATION PORT
-// =========================================================================
+/// A newly issued access token plus its client-facing lifetime metadata.
+#[derive(Debug, Clone)]
+pub struct IssuedAccessToken {
+    pub token: String,
+    pub expires_in: i64,
+}
 
-/// The ability to generate a secure access token for a given user.
+/// The ability to generate a signed access token for an authenticated user.
 ///
-/// By defining this as a trait, we isolate the business logic from the
-/// specific token standard (e.g., JWT, Paseto, or opaque database tokens).
+/// This contract is intentionally narrow: access-token generation only depends
+/// on the authenticated subject identity, not on a full domain aggregate.
 pub trait TokenGenerator: Send + Sync {
-    /// Generates a signed access token containing the user's identity and claims.
-    fn generate_token(&self, user: &User) -> Result<String, AppError>;
+    /// Generates a signed access token for the supplied subject.
+    fn generate_token(&self, user_id: &UserId) -> Result<IssuedAccessToken, AppError>;
 }
