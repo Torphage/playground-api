@@ -7,7 +7,7 @@
 use chrono::{DateTime, Utc};
 use std::collections::HashSet;
 
-use crate::domain::accounts::values::{Email, PasswordHash, Permission, Role, UserId, Username};
+use crate::domain::platform::identity::values::{Email, PasswordHash, Permission, Role, UserId, Username};
 
 /// The central entity representing an authenticated individual in the system.
 ///

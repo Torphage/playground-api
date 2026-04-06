@@ -11,7 +11,7 @@
 use async_trait::async_trait;
 
 use crate::application::error::AppError;
-use crate::domain::accounts::{
+use crate::domain::platform::identity::{
     entities::User,
     values::{Email, UserId},
 };

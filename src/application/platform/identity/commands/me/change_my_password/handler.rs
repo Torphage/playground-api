@@ -2,13 +2,13 @@
 
 use std::sync::Arc;
 
-use crate::application::accounts::commands::me::change_my_password::Command;
-use crate::application::authentication::AuthenticatedIdentity;
-use crate::application::authorization::Authorizer;
 use crate::application::error::AppError;
+use crate::application::platform::authentication::AuthenticatedIdentity;
+use crate::application::platform::authorization::Authorizer;
+use crate::application::platform::identity::commands::me::change_my_password::Command;
 use crate::application::ports::{PrincipalLoader, Transaction, TransactionManager};
-use crate::domain::accounts::values::{Permission, PlaintextPassword};
-use crate::domain::accounts::{AccountError, PasswordHasher, ports::UserRepository};
+use crate::domain::platform::::values::{Permission, PlaintextPassword};
+use crate::domain::platform::::{AccountError, PasswordHasher, ports::UserRepository};
 
 pub struct Handler<TM, UR, PL> {
     tx_manager: TM,

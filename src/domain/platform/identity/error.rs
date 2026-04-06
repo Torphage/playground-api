@@ -3,7 +3,7 @@
 use serde_json::Value;
 use thiserror::Error;
 
-use crate::domain::accounts::values::{EmailError, PasswordError, UsernameError};
+use crate::domain::platform::identity::values::{EmailError, PasswordError, UsernameError};
 use crate::domain::shared::ErrorCode;
 
 /// Represents a business rule violation within the Authentication domain.

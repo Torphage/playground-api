@@ -5,14 +5,14 @@ use std::sync::Arc;
 use chrono::{Duration, Utc};
 use uuid::Uuid;
 
-use crate::application::accounts::commands::auth::IssuedTokens;
-use crate::application::accounts::commands::auth::issue_access_token::IssueTokenCommand;
 use crate::application::error::AppError;
+use crate::application::platform::identity::commands::auth::IssuedTokens;
+use crate::application::platform::identity::commands::auth::issue_access_token::IssueTokenCommand;
 use crate::application::ports::{
     NewRefreshTokenRecord, RefreshTokenRepository, RefreshTokenService, TokenGenerator,
 };
 use crate::application::shared::{Transaction, TransactionManager};
-use crate::domain::accounts::{
+use crate::domain::platform::::{
     AccountError,
     ports::{PasswordHasher, UserRepository},
     values::{Email, PlaintextPassword},

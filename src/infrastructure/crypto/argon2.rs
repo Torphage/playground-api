@@ -5,18 +5,14 @@
 //! and verify passwords, offloading the CPU-intensive work to a blocking
 //! thread pool to prevent async runtime starvation.
 
-use argon2::{
-    Argon2,
-    password_hash::{
-        PasswordHash as Argon2Hash, PasswordHasher as Argon2HasherTrait, PasswordVerifier,
-        SaltString, rand_core::OsRng,
-    },
-};
+use argon2::{Argon2, password_hash::{
+    PasswordHash as Argon2Hash, PasswordHasher as Argon2HasherTrait, PasswordVerifier,
+    SaltString, rand_core::OsRng,
+}, PasswordHasher};
 use async_trait::async_trait;
 
-use crate::domain::accounts::{
+use crate::domain::platform::identity::{
     AccountError,
-    ports::PasswordHasher,
     values::{PasswordHash, PlaintextPassword},
 };
 

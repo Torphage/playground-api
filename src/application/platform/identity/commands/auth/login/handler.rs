@@ -4,12 +4,12 @@ use std::sync::Arc;
 
 use crate::application::error::AppError;
 use crate::application::ports::{Transaction, TransactionManager};
-use crate::domain::accounts::{
+use crate::domain::platform::::{
     AccountError,
     ports::{PasswordHasher, UserRepository},
     values::{Email, PlaintextPassword},
 };
-use crate::infrastructure::authentication::session::{FredSessionStore, SessionRecord};
+use crate::infrastructure::platform::authentication::session::{FredSessionStore, SessionRecord};
 
 use super::LoginCommand;
 

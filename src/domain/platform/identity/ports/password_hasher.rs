@@ -5,7 +5,7 @@
 
 use async_trait::async_trait;
 
-use crate::domain::accounts::{
+use crate::domain::platform::identity::{
     AccountError,
     values::{PasswordHash, PlaintextPassword},
 };

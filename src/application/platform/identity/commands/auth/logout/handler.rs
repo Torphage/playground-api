@@ -2,9 +2,9 @@
 
 use std::sync::Arc;
 
-use crate::application::accounts::commands::auth::logout::LogoutCommand;
 use crate::application::error::AppError;
-use crate::infrastructure::authentication::session::FredSessionStore;
+use crate::application::platform::identity::commands::auth::logout::LogoutCommand;
+use crate::infrastructure::platform::authentication::session::FredSessionStore;
 
 /// Handles session logout by deleting the Redis-backed session.
 pub struct LogoutHandler {
