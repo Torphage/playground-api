@@ -70,6 +70,24 @@ CREATE TABLE accounts.role_permissions
     PRIMARY KEY (role_id, permission_slug)
 );
 
+--- ACCOUNTS.REFRESH_TOKENS ---
+
+CREATE TABLE accounts.refresh_tokens (
+     id             uuid PRIMARY KEY,
+     family_id      uuid NOT NULL,
+     user_id        uuid NOT NULL REFERENCES accounts.users(id) ON DELETE CASCADE,
+     token_hash     text NOT NULL UNIQUE,
+     created_at     timestamptz NOT NULL,
+     expires_at     timestamptz NOT NULL,
+     used_at        timestamptz NULL,
+     revoked_at     timestamptz NULL,
+     replaced_by_id uuid NULL REFERENCES accounts.refresh_tokens(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON accounts.refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_family_id ON accounts.refresh_tokens(family_id);
+CREATE INDEX idx_refresh_tokens_expires_at ON accounts.refresh_tokens(expires_at);
+
 -- ==========================================
 -- SYSTEM SCHEMA (Settings and Feature Flags)
 -- ==========================================
