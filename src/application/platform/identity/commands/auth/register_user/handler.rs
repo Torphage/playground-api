@@ -4,8 +4,8 @@ use std::sync::Arc;
 
 use crate::application::error::AppError;
 use crate::application::platform::identity::commands::auth::register_user::RegisterCommand;
-use crate::application::ports::{Transaction, TransactionManager};
-use crate::domain::platform::::{
+use crate::application::shared::{Transaction, TransactionManager};
+use crate::domain::platform::identity::{
     AccountError,
     entities::User,
     ports::{PasswordHasher, UserRepository},

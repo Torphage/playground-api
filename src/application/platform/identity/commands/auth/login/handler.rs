@@ -3,8 +3,8 @@
 use std::sync::Arc;
 
 use crate::application::error::AppError;
-use crate::application::ports::{Transaction, TransactionManager};
-use crate::domain::platform::::{
+use crate::application::shared::{Transaction, TransactionManager};
+use crate::domain::platform::identity::{
     AccountError,
     ports::{PasswordHasher, UserRepository},
     values::{Email, PlaintextPassword},

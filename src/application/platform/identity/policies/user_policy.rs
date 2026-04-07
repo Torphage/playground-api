@@ -1,8 +1,5 @@
 //! User-related authorization policies.
 
-use crate::application::platform::authorization::Principal;
-use crate::domain::platform::::values::{Permission, UserId};
-
 /// Policy helpers for user-related actions.
 pub struct UserPolicy;
 

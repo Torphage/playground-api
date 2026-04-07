@@ -5,10 +5,11 @@ use std::sync::Arc;
 use crate::application::error::AppError;
 use crate::application::platform::authentication::AuthenticatedIdentity;
 use crate::application::platform::authorization::Authorizer;
+use crate::application::platform::authorization::ports::PrincipalLoader;
 use crate::application::platform::identity::commands::me::change_my_password::Command;
-use crate::application::ports::{PrincipalLoader, Transaction, TransactionManager};
-use crate::domain::platform::::values::{Permission, PlaintextPassword};
-use crate::domain::platform::::{AccountError, PasswordHasher, ports::UserRepository};
+use crate::application::shared::{Transaction, TransactionManager};
+use crate::domain::platform::identity::values::{Permission, PlaintextPassword};
+use crate::domain::platform::identity::{AccountError, PasswordHasher, ports::UserRepository};
 
 pub struct Handler<TM, UR, PL> {
     tx_manager: TM,
