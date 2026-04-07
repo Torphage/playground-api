@@ -15,7 +15,7 @@ use crate::config::RedisConfig;
 ///
 /// Fred's client type is cheaply cloneable, so callers can store and pass
 /// clones freely.
-pub type RedisClient = fred::clients::Client;
+pub type RedisClient = Client;
 
 /// Builds and initializes the shared Redis client.
 pub async fn build_redis_client(config: &RedisConfig) -> Result<RedisClient, AppError> {

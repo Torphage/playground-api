@@ -35,7 +35,7 @@ impl<'a> PrincipalLoader<PostgresTransaction<'a>> for PostgresPrincipalLoader {
         let user_exists = sqlx::query!(
             r#"
             SELECT 1 AS "exists!"
-            FROM accounts.users
+            FROM identity.users
             WHERE id = $1
             "#,
             user_uuid
@@ -54,8 +54,8 @@ impl<'a> PrincipalLoader<PostgresTransaction<'a>> for PostgresPrincipalLoader {
             PrincipalPermissionRow,
             r#"
             SELECT DISTINCT rp.permission_slug
-            FROM accounts.role_permissions rp
-            JOIN accounts.user_roles ur ON rp.role_id = ur.role_id
+            FROM identity.role_permissions rp
+            JOIN identity.user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             "#,
             user_uuid

@@ -6,18 +6,18 @@ use uuid::Uuid;
 
 use crate::application::error::AppError;
 use crate::application::platform::authentication::ports::{
-    NewRefreshTokenRecord, RefreshTokenRecord, RefreshTokenRepository,
+    NewRefreshTokenRecord, RefreshTokenRecord, RefreshTokenStore,
 };
-use crate::domain::platform::::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 use crate::infrastructure::db::postgres::PostgresTransaction;
 
 use super::rows::RefreshTokenRow;
 
 /// PostgreSQL-backed refresh-token repository.
 #[derive(Default)]
-pub struct PostgresRefreshTokenRepository;
+pub struct PostgresRefreshTokenStore;
 
-impl PostgresRefreshTokenRepository {
+impl PostgresRefreshTokenStore {
     /// Creates a new repository instance.
     pub fn new() -> Self {
         Self
@@ -39,7 +39,7 @@ fn assemble_refresh_token(row: RefreshTokenRow) -> RefreshTokenRecord {
 }
 
 #[async_trait]
-impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshTokenRepository {
+impl<'a> RefreshTokenStore<PostgresTransaction<'a>> for PostgresRefreshTokenStore {
     async fn insert(
         &self,
         tx: &mut PostgresTransaction<'a>,
@@ -49,7 +49,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
 
         sqlx::query!(
             r#"
-            INSERT INTO accounts.refresh_tokens (
+            INSERT INTO identity.refresh_tokens (
                 id,
                 family_id,
                 user_id,
@@ -96,7 +96,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
                 used_at,
                 revoked_at,
                 replaced_by_id
-            FROM accounts.refresh_tokens
+            FROM identity.refresh_tokens
             WHERE token_hash = $1
             FOR UPDATE
             "#,
@@ -122,7 +122,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
 
         let result = sqlx::query!(
             r#"
-            UPDATE accounts.refresh_tokens
+            UPDATE identity.refresh_tokens
             SET used_at = $2,
                 replaced_by_id = $3
             WHERE id = $1
@@ -158,7 +158,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
 
         sqlx::query!(
             r#"
-            UPDATE accounts.refresh_tokens
+            UPDATE identity.refresh_tokens
             SET revoked_at = $2
             WHERE id = $1
               AND revoked_at IS NULL
@@ -183,7 +183,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
 
         sqlx::query!(
             r#"
-            UPDATE accounts.refresh_tokens
+            UPDATE identity.refresh_tokens
             SET revoked_at = $2
             WHERE family_id = $1
               AND revoked_at IS NULL
@@ -210,7 +210,7 @@ impl<'a> RefreshTokenRepository<PostgresTransaction<'a>> for PostgresRefreshToke
 
         sqlx::query!(
             r#"
-            UPDATE accounts.refresh_tokens
+            UPDATE identity.refresh_tokens
             SET revoked_at = $2
             WHERE user_id = $1
               AND revoked_at IS NULL

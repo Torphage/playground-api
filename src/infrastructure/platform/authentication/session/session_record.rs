@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::domain::platform::::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 
 /// Stored Redis session payload.
 #[derive(Debug, Clone, Serialize, Deserialize)]

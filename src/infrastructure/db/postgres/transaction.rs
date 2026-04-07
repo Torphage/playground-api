@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use sqlx::{PgPool, Postgres};
 
 use crate::application::error::AppError;
-use crate::application::ports::{Transaction, TransactionManager};
+use crate::application::shared::{Transaction, TransactionManager};
 
 /// Starts PostgreSQL transactions backed by a shared SQLx pool.
 #[derive(Clone)]

@@ -11,7 +11,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::domain::platform::::{
+use crate::domain::platform::identity::{
     entities::User,
     values::{Email, PasswordHash, Permission, Role, UserId, Username},
 };
