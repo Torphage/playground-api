@@ -3,7 +3,7 @@
 //! This type represents the actor established by authentication, independent
 //! of HTTP, Axum, cookies, JWTs, or any other delivery mechanism.
 
-use crate::domain::platform::::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 
 /// A successfully authenticated caller identity.
 #[derive(Debug, Clone, PartialEq, Eq)]
