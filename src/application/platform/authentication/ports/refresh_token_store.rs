@@ -1,16 +1,13 @@
-//! Application-level persistence contract for refresh-token lifecycle state.
+//! Refresh-token persistence contract.
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::domain::platform::::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 
 /// Stored refresh-token lifecycle state.
-///
-/// The raw refresh token is never persisted directly. Only a hash of it should
-/// be stored in durable storage.
 #[derive(Debug, Clone)]
 pub struct RefreshTokenRecord {
     pub id: Uuid,
@@ -36,14 +33,8 @@ pub struct NewRefreshTokenRecord {
 }
 
 /// Persistence contract for refresh-token lifecycle management.
-///
-/// This supports:
-/// - initial issuance
-/// - lookup during refresh
-/// - rotation
-/// - revocation of one token or a whole family
 #[async_trait]
-pub trait RefreshTokenRepository<Tx>: Send + Sync {
+pub trait RefreshTokenStore<Tx>: Send + Sync {
     /// Inserts a newly issued refresh token.
     async fn insert(&self, tx: &mut Tx, new_token: &NewRefreshTokenRecord) -> Result<(), AppError>;
 
