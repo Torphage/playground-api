@@ -13,33 +13,36 @@ use tokio::net::TcpListener;
 
 use crate::api::router;
 use crate::api::state::{
-    AccountsAuthHandlers, AccountsHandlers, AccountsMeHandlers, AppState, AppsState,
-    Authentication, ChangeMyPasswordHandler, IssueAccessTokenHandler, PlatformState,
-    RevokeRefreshTokenHandler, RotateRefreshTokenHandler, Sessions, TokenIssuance,
+    AppState, AppsState, Authentication, ChangeMyPasswordHandler, IssueAccessTokenHandler,
+    PlatformAuthHandlers, PlatformHandlers, PlatformMeHandlers, PlatformState,
+    RevokeRefreshTokenHandler, RotateRefreshTokenHandler, Sessions,
 };
-use crate::application::authorization::Authorizer;
-use crate::application::ports::{RefreshTokenService, TokenGenerator};
+use crate::application::platform::authentication::ports::{
+    AccessTokenIssuer, RefreshTokenHasher, RefreshTokenIssuer,
+};
+use crate::application::platform::authorization::Authorizer;
+use crate::application::platform::identity::commands::auth::{login, logout, register_user};
 use crate::config::AppConfig;
-use crate::domain::accounts::PasswordHasher;
-use crate::infrastructure::authentication::refresh_token_service::DefaultRefreshTokenService;
-use crate::infrastructure::authentication::session::{
-    FredSessionStore, SessionRequestAuthenticator,
-};
-use crate::infrastructure::authentication::{
-    CompositeRequestAuthenticator,
-    jwt::{JwtProvider, JwtRequestAuthenticator, JwtVerifier},
-};
-use crate::infrastructure::authorization::permission_authorizer::PermissionAuthorizer;
+use crate::domain::platform::identity::PasswordHasher;
 use crate::infrastructure::crypto::Argon2Provider;
 use crate::infrastructure::db::postgres::{
     PostgresTransactionManager, build_postgres_pool, run_postgres_migrations,
 };
 use crate::infrastructure::db::redis::{RedisClient, build_redis_client};
-use crate::infrastructure::repositories::accounts::principals::{
+use crate::infrastructure::platform::authentication::session::{
+    FredSessionStore, SessionRequestAuthenticator,
+};
+use crate::infrastructure::platform::authentication::sha256_refresh_token_codec::Sha256RefreshTokenCodec;
+use crate::infrastructure::platform::authentication::{
+    CompositeRequestAuthenticator,
+    jwt::{JwtAccessTokenIssuer, JwtRequestAuthenticator, JwtVerifier},
+};
+use crate::infrastructure::platform::authorization::permission_authorizer::PermissionAuthorizer;
+use crate::infrastructure::platform::authorization::principals::{
     CacheBackedPrincipalLoader, RedisPrincipalCache,
 };
-use crate::infrastructure::repositories::accounts::{
-    PostgresPrincipalLoader, PostgresRefreshTokenRepository, PostgresUserRepository,
+use crate::infrastructure::platform::identity::{
+    PostgresPrincipalLoader, PostgresRefreshTokenStore, PostgresUserRepository,
 };
 
 type PrincipalLoader = CacheBackedPrincipalLoader<PostgresPrincipalLoader>;
@@ -77,17 +80,18 @@ impl StdError for StartupError {}
 /// Shared application components built once and reused across module builders.
 ///
 /// This stays private to the composition root. It exists to prevent each module
-/// (`accounts`, `kitchen`, `workout`, etc.) from rebuilding the same low-level
-/// dependencies independently.
+/// from rebuilding the same low-level dependencies independently.
 struct SharedComponents {
     tx_manager: PostgresTransactionManager,
     password_hasher: Arc<dyn PasswordHasher>,
     authorizer: Arc<dyn Authorizer>,
     principal_loader: Arc<PrincipalLoader>,
     user_repo: Arc<PostgresUserRepository>,
-    refresh_token_repo: Arc<PostgresRefreshTokenRepository>,
-    token_generator: Arc<dyn TokenGenerator>,
-    refresh_token_service: Arc<dyn RefreshTokenService>,
+    access_token_issuer: Arc<dyn AccessTokenIssuer>,
+    refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
+    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    refresh_token_store: Arc<PostgresRefreshTokenStore>,
+    session_store: Arc<FredSessionStore>,
 }
 
 /// Builds the infrastructure graph and returns the bound listener plus router.
@@ -148,20 +152,17 @@ async fn build_listener(config: &AppConfig) -> Result<TcpListener, StartupError>
 fn build_state(pool: sqlx::PgPool, redis_client: RedisClient, config: Arc<AppConfig>) -> AppState {
     let sessions = build_sessions(redis_client.clone(), &config);
     let authentication = build_authentication(&config, Arc::clone(&sessions.store));
-    let shared = build_shared_components(pool, redis_client, &config);
+    let shared = build_shared_components(pool, redis_client, Arc::clone(&sessions.store), &config);
 
-    let platform = build_platform(
-        authentication,
-        sessions,
-        shared.token_generator.clone(),
-        shared.refresh_token_service.clone(),
-    );
-
-    let accounts = build_accounts(&shared, &config);
+    let platform_handlers = build_platform_handlers(&shared, &config);
 
     AppState {
-        platform,
-        apps: AppsState { accounts },
+        platform: PlatformState {
+            authentication,
+            sessions,
+            handlers: platform_handlers,
+        },
+        apps: AppsState {},
         config,
     }
 }
@@ -203,22 +204,6 @@ fn build_authentication(
     }
 }
 
-fn build_platform(
-    authentication: Authentication,
-    sessions: Sessions,
-    token_generator: Arc<dyn TokenGenerator>,
-    refresh_token_service: Arc<dyn RefreshTokenService>,
-) -> PlatformState {
-    PlatformState {
-        authentication,
-        sessions,
-        token_issuance: TokenIssuance {
-            token_generator,
-            refresh_token_service,
-        },
-    }
-}
-
 /// Builds shared low-level application dependencies once.
 ///
 /// These are reused by module-specific builders so that each module can
@@ -226,6 +211,7 @@ fn build_platform(
 fn build_shared_components(
     pool: sqlx::PgPool,
     redis_client: RedisClient,
+    session_store: Arc<FredSessionStore>,
     config: &AppConfig,
 ) -> SharedComponents {
     let tx_manager = PostgresTransactionManager::new(pool);
@@ -241,14 +227,17 @@ fn build_shared_components(
     ));
 
     let user_repo = Arc::new(PostgresUserRepository::new());
-    let refresh_token_repo = Arc::new(PostgresRefreshTokenRepository::new());
+    let refresh_token_store = Arc::new(PostgresRefreshTokenStore::new());
 
     let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2Provider::new());
     let authorizer: Arc<dyn Authorizer> = Arc::new(PermissionAuthorizer::new());
-    let token_generator: Arc<dyn TokenGenerator> =
-        Arc::new(JwtProvider::new(&config.authentication.jwt));
-    let refresh_token_service: Arc<dyn RefreshTokenService> =
-        Arc::new(DefaultRefreshTokenService::new());
+
+    let access_token_issuer: Arc<dyn AccessTokenIssuer> =
+        Arc::new(JwtAccessTokenIssuer::new(&config.authentication.jwt));
+
+    let refresh_token_codec = Arc::new(Sha256RefreshTokenCodec::new());
+    let refresh_token_issuer: Arc<dyn RefreshTokenIssuer> = refresh_token_codec.clone();
+    let refresh_token_hasher: Arc<dyn RefreshTokenHasher> = refresh_token_codec.clone();
 
     SharedComponents {
         tx_manager,
@@ -256,56 +245,79 @@ fn build_shared_components(
         authorizer,
         principal_loader,
         user_repo,
-        refresh_token_repo,
-        token_generator,
-        refresh_token_service,
+        access_token_issuer,
+        refresh_token_issuer,
+        refresh_token_hasher,
+        refresh_token_store,
+        session_store,
     }
 }
 
-fn build_accounts(shared: &SharedComponents, config: &AppConfig) -> AccountsHandlers {
-    AccountsHandlers {
-        auth: build_accounts_auth_handlers(shared, config),
-        me: build_accounts_me_handlers(shared),
+/// Builds all prewired platform workflows exposed to the API layer.
+fn build_platform_handlers(shared: &SharedComponents, config: &AppConfig) -> PlatformHandlers {
+    PlatformHandlers {
+        auth: build_platform_auth_handlers(shared, config),
+        me: build_platform_me_handlers(shared),
     }
 }
 
-fn build_accounts_auth_handlers(
+fn build_platform_auth_handlers(
     shared: &SharedComponents,
     config: &AppConfig,
-) -> AccountsAuthHandlers {
-    let issue_token = Arc::new(IssueAccessTokenHandler::new(
+) -> PlatformAuthHandlers {
+    let register_user = Arc::new(register_user::RegisterHandler::new(
         shared.tx_manager.clone(),
         shared.user_repo.clone(),
-        shared.refresh_token_repo.clone(),
         shared.password_hasher.clone(),
-        shared.token_generator.clone(),
-        shared.refresh_token_service.clone(),
-        config.authentication.jwt.refresh_ttl_seconds,
     ));
 
-    let refresh_token = Arc::new(RotateRefreshTokenHandler::new(
+    let login = Arc::new(login::LoginHandler::new(
         shared.tx_manager.clone(),
         shared.user_repo.clone(),
-        shared.refresh_token_repo.clone(),
-        shared.token_generator.clone(),
-        shared.refresh_token_service.clone(),
+        shared.password_hasher.clone(),
+        shared.session_store.clone(),
+    ));
+
+    let logout = Arc::new(logout::LogoutHandler::new(shared.session_store.clone()));
+
+    let issue_access_token = Arc::new(IssueAccessTokenHandler::new(
+        shared.tx_manager.clone(),
+        shared.user_repo.clone(),
+        shared.password_hasher.clone(),
+        shared.access_token_issuer.clone(),
+        shared.refresh_token_issuer.clone(),
+        shared.refresh_token_hasher.clone(),
+        shared.refresh_token_store.clone(),
         config.authentication.jwt.refresh_ttl_seconds,
     ));
 
-    let revoke_token = Arc::new(RevokeRefreshTokenHandler::new(
+    let rotate_refresh_token = Arc::new(RotateRefreshTokenHandler::new(
         shared.tx_manager.clone(),
-        shared.refresh_token_repo.clone(),
-        shared.refresh_token_service.clone(),
+        shared.user_repo.clone(),
+        shared.access_token_issuer.clone(),
+        shared.refresh_token_issuer.clone(),
+        shared.refresh_token_hasher.clone(),
+        shared.refresh_token_store.clone(),
+        config.authentication.jwt.refresh_ttl_seconds,
     ));
 
-    AccountsAuthHandlers {
-        issue_token,
-        refresh_token,
-        revoke_token,
+    let revoke_refresh_token = Arc::new(RevokeRefreshTokenHandler::new(
+        shared.tx_manager.clone(),
+        shared.refresh_token_hasher.clone(),
+        shared.refresh_token_store.clone(),
+    ));
+
+    PlatformAuthHandlers {
+        register_user,
+        login,
+        logout,
+        issue_access_token,
+        rotate_refresh_token,
+        revoke_refresh_token,
     }
 }
 
-fn build_accounts_me_handlers(shared: &SharedComponents) -> AccountsMeHandlers {
+fn build_platform_me_handlers(shared: &SharedComponents) -> PlatformMeHandlers {
     let change_my_password = Arc::new(ChangeMyPasswordHandler::new(
         shared.tx_manager.clone(),
         shared.user_repo.clone(),
@@ -314,5 +326,5 @@ fn build_accounts_me_handlers(shared: &SharedComponents) -> AccountsMeHandlers {
         shared.authorizer.clone(),
     ));
 
-    AccountsMeHandlers { change_my_password }
+    PlatformMeHandlers { change_my_password }
 }

@@ -9,18 +9,24 @@ use std::sync::Arc;
 use axum::extract::FromRef;
 
 use crate::api::authentication::RequestAuthenticator;
-use crate::application::accounts::commands::{
+use crate::application::platform::identity::commands::auth::logout::LogoutHandler;
+use crate::application::platform::identity::commands::auth::{login, register_user};
+use crate::application::platform::identity::commands::{
     auth::{issue_access_token, revoke_refresh_token, rotate_refresh_token},
     me::change_my_password,
 };
-use crate::application::ports::{RefreshTokenService, TokenGenerator};
 use crate::config::AppConfig;
-use crate::infrastructure::authentication::session::FredSessionStore;
 use crate::infrastructure::db::postgres::PostgresTransactionManager;
-use crate::infrastructure::repositories::accounts::principals::CacheBackedPrincipalLoader;
-use crate::infrastructure::repositories::accounts::{
-    PostgresPrincipalLoader, PostgresRefreshTokenRepository, PostgresUserRepository,
+use crate::infrastructure::platform::authentication::session::FredSessionStore;
+use crate::infrastructure::platform::authorization::principals::CacheBackedPrincipalLoader;
+use crate::infrastructure::platform::identity::{
+    PostgresPrincipalLoader, PostgresRefreshTokenStore, PostgresUserRepository,
 };
+
+pub type RegisterHandler =
+    register_user::RegisterHandler<PostgresTransactionManager, PostgresUserRepository>;
+
+pub type LoginHandler = login::LoginHandler<PostgresTransactionManager, PostgresUserRepository>;
 
 /// Concrete application handler type for the "change my password" workflow.
 pub type ChangeMyPasswordHandler = change_my_password::Handler<
@@ -33,21 +39,19 @@ pub type ChangeMyPasswordHandler = change_my_password::Handler<
 pub type IssueAccessTokenHandler = issue_access_token::IssueTokenHandler<
     PostgresTransactionManager,
     PostgresUserRepository,
-    PostgresRefreshTokenRepository,
+    PostgresRefreshTokenStore,
 >;
 
 /// Concrete application handler type for refresh-token rotation.
 pub type RotateRefreshTokenHandler = rotate_refresh_token::RefreshTokenHandler<
     PostgresTransactionManager,
     PostgresUserRepository,
-    PostgresRefreshTokenRepository,
+    PostgresRefreshTokenStore,
 >;
 
 /// Concrete application handler type for refresh-token revocation.
-pub type RevokeRefreshTokenHandler = revoke_refresh_token::RevokeTokenHandler<
-    PostgresTransactionManager,
-    PostgresRefreshTokenRepository,
->;
+pub type RevokeRefreshTokenHandler =
+    revoke_refresh_token::RevokeTokenHandler<PostgresTransactionManager, PostgresRefreshTokenStore>;
 
 /// Incoming-request authentication dependencies.
 #[derive(Clone)]
@@ -66,24 +70,48 @@ pub struct Sessions {
     pub store: Arc<FredSessionStore>,
 }
 
-/// Outgoing token issuance dependencies.
-///
-/// Kept separate from request authentication because not every authentication
-/// method implies token issuance.
+/// Platform auth workflows exposed to the API layer.
 #[derive(Clone)]
-pub struct TokenIssuance {
-    /// Current token generation capability.
-    pub token_generator: Arc<dyn TokenGenerator>,
+pub struct PlatformAuthHandlers {
+    /// Registers a new user.
+    pub register_user: Arc<RegisterHandler>,
 
-    /// Refresh-token generation capability.
-    pub refresh_token_service: Arc<dyn RefreshTokenService>,
+    /// Authenticates a user using credentials.
+    pub login: Arc<LoginHandler>,
+
+    /// Logs out the current user.
+    pub logout: Arc<LogoutHandler>,
+
+    /// Issues an access token and refresh token using credentials.
+    pub issue_access_token: Arc<IssueAccessTokenHandler>,
+
+    /// Rotates a refresh token into a new token pair.
+    pub rotate_refresh_token: Arc<RotateRefreshTokenHandler>,
+
+    /// Revokes a refresh token.
+    pub revoke_refresh_token: Arc<RevokeRefreshTokenHandler>,
+}
+
+/// Platform "me" workflows exposed to the API layer.
+#[derive(Clone)]
+pub struct PlatformMeHandlers {
+    /// Changes the authenticated user's password.
+    pub change_my_password: Arc<ChangeMyPasswordHandler>,
+}
+
+/// Platform workflows exposed to the API layer.
+#[derive(Clone)]
+pub struct PlatformHandlers {
+    /// Authentication/token workflows.
+    pub auth: PlatformAuthHandlers,
+
+    /// Authenticated self-service account workflows.
+    pub me: PlatformMeHandlers,
 }
 
 /// Platform-wide capabilities shared across application modules.
 ///
-/// These are cross-cutting concerns that support the whole system rather than
-/// belonging to one specific app/module like `accounts`, `kitchen`, or
-/// `workout`.
+/// These are cross-cutting concerns that support the whole system.
 #[derive(Clone)]
 pub struct PlatformState {
     /// Request-boundary authentication components.
@@ -92,48 +120,16 @@ pub struct PlatformState {
     /// Session storage infrastructure.
     pub sessions: Sessions,
 
-    /// Token issuance components.
-    pub token_issuance: TokenIssuance,
-}
-
-/// Accounts/auth workflows exposed to the API layer.
-#[derive(Clone)]
-pub struct AccountsAuthHandlers {
-    /// Issues an access token and refresh token using credentials.
-    pub issue_token: Arc<IssueAccessTokenHandler>,
-
-    /// Rotates a refresh token into a new token pair.
-    pub refresh_token: Arc<RotateRefreshTokenHandler>,
-
-    /// Revokes a refresh token.
-    pub revoke_token: Arc<RevokeRefreshTokenHandler>,
-}
-
-/// Accounts/"me" workflows exposed to the API layer.
-#[derive(Clone)]
-pub struct AccountsMeHandlers {
-    /// Changes the authenticated user's password.
-    pub change_my_password: Arc<ChangeMyPasswordHandler>,
-}
-
-/// Accounts workflows exposed to the API layer.
-#[derive(Clone)]
-pub struct AccountsHandlers {
-    /// Authentication/token workflows.
-    pub auth: AccountsAuthHandlers,
-
-    /// Authenticated self-service account workflows.
-    pub me: AccountsMeHandlers,
+    /// Prewired platform workflows.
+    pub handlers: PlatformHandlers,
 }
 
 /// Application-module state exposed to the API layer.
 ///
 /// As the super-app grows, additional modules such as `kitchen` and `workout`
-/// should be added here as siblings to `accounts`.
+/// should be added here.
 #[derive(Clone)]
 pub struct AppsState {
-    /// Account-related workflows.
-    pub accounts: AccountsHandlers,
     // Future examples:
     // pub kitchen: KitchenHandlers,
     // pub workout: WorkoutHandlers,
@@ -149,7 +145,7 @@ pub struct AppsState {
 /// infrastructure parts.
 #[derive(Clone)]
 pub struct AppState {
-    /// Cross-cutting platform capabilities.
+    /// Cross-cutting platform capabilities and workflows.
     pub platform: PlatformState,
 
     /// Prewired app/module workflows.
@@ -171,14 +167,20 @@ impl FromRef<AppState> for Sessions {
     }
 }
 
-impl FromRef<AppState> for TokenIssuance {
+impl FromRef<AppState> for PlatformHandlers {
     fn from_ref(state: &AppState) -> Self {
-        state.platform.token_issuance.clone()
+        state.platform.handlers.clone()
     }
 }
 
-impl FromRef<AppState> for AccountsHandlers {
+impl FromRef<AppState> for PlatformAuthHandlers {
     fn from_ref(state: &AppState) -> Self {
-        state.apps.accounts.clone()
+        state.platform.handlers.auth.clone()
+    }
+}
+
+impl FromRef<AppState> for PlatformMeHandlers {
+    fn from_ref(state: &AppState) -> Self {
+        state.platform.handlers.me.clone()
     }
 }
