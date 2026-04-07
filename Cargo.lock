@@ -2422,6 +2422,7 @@ dependencies = [
  "opentelemetry",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
+ "rand 0.8.5",
  "rand_core 0.10.0",
  "reqwest 0.13.2",
  "sentry",
