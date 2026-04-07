@@ -4,18 +4,18 @@
 -- ==========================================
 
 -- 6. Kitchen Schema
-DROP TABLE IF EXISTS app_kitchen.culinary_item_tags;
-DROP TABLE IF EXISTS app_kitchen.recipe_tags;
-DROP TABLE IF EXISTS app_kitchen.recipe_notes;
-DROP TABLE IF EXISTS app_kitchen.recipe_ingredients;
-DROP TABLE IF EXISTS app_kitchen.recipes;
-DROP TABLE IF EXISTS app_kitchen.ingredient_nutrients;
-DROP TABLE IF EXISTS app_kitchen.ingredient_proposals;
-DROP TABLE IF EXISTS app_kitchen.ingredient_conversions;
-DROP TABLE IF EXISTS app_kitchen.ingredients;
-DROP TABLE IF EXISTS app_kitchen.culinary_items;
-DROP TABLE IF EXISTS app_kitchen.cuisines;
-DROP TABLE IF EXISTS app_kitchen.tags;
+DROP TABLE IF EXISTS kitchen.culinary_item_tags;
+DROP TABLE IF EXISTS kitchen.recipe_tags;
+DROP TABLE IF EXISTS kitchen.recipe_notes;
+DROP TABLE IF EXISTS kitchen.recipe_ingredients;
+DROP TABLE IF EXISTS kitchen.recipes;
+DROP TABLE IF EXISTS kitchen.ingredient_nutrients;
+DROP TABLE IF EXISTS kitchen.ingredient_proposals;
+DROP TABLE IF EXISTS kitchen.ingredient_conversions;
+DROP TABLE IF EXISTS kitchen.ingredients;
+DROP TABLE IF EXISTS kitchen.culinary_items;
+DROP TABLE IF EXISTS kitchen.cuisines;
+DROP TABLE IF EXISTS kitchen.tags;
 
 -- 5. Shared Schema
 DROP TABLE IF EXISTS shared.nutrients;
@@ -27,11 +27,11 @@ DROP TABLE IF EXISTS system.feature_flags;
 DROP TABLE IF EXISTS system.settings;
 
 -- 3. Identity Schema
-DROP TABLE IF EXISTS accounts.role_permissions;
-DROP TABLE IF EXISTS accounts.permissions;
-DROP TABLE IF EXISTS accounts.user_roles;
-DROP TABLE IF EXISTS accounts.roles;
-DROP TABLE IF EXISTS accounts.users;
+DROP TABLE IF EXISTS identity.role_permissions;
+DROP TABLE IF EXISTS identity.permissions;
+DROP TABLE IF EXISTS identity.user_roles;
+DROP TABLE IF EXISTS identity.roles;
+DROP TABLE IF EXISTS identity.users;
 
 -- 1. Schemas
 DROP SCHEMA IF EXISTS app_kitchen;
