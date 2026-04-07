@@ -6,9 +6,9 @@ use async_trait::async_trait;
 use axum::http::{header::COOKIE, request::Parts};
 use uuid::Uuid;
 
-use crate::application::platform::authentication::AuthenticatedIdentity;
-use crate::api::authentication::RequestAuthenticator;
+use crate::api::authentication::{AuthenticationOutcome, RequestAuthenticator};
 use crate::application::error::AppError;
+use crate::application::platform::authentication::AuthenticatedIdentity;
 use crate::domain::platform::identity::values::UserId;
 
 use super::fred_store::FredSessionStore;
@@ -32,17 +32,17 @@ impl SessionRequestAuthenticator {
 
 #[async_trait]
 impl RequestAuthenticator for SessionRequestAuthenticator {
-    async fn authenticate(&self, parts: &Parts) -> Result<Option<AuthenticatedIdentity>, AppError> {
+    async fn authenticate(&self, parts: &Parts) -> Result<AuthenticationOutcome, AppError> {
         let Some(cookie_header) = parts
             .headers
             .get(COOKIE)
             .and_then(|value| value.to_str().ok())
         else {
-            return Ok(None);
+            return Ok(AuthenticationOutcome::NotPresent);
         };
 
         let Some(session_id) = extract_cookie(cookie_header, &self.cookie_name) else {
-            return Ok(None);
+            return Ok(AuthenticationOutcome::NotPresent);
         };
 
         let session = self
@@ -57,7 +57,9 @@ impl RequestAuthenticator for SessionRequestAuthenticator {
 
         let user_id = UserId::from_uuid(user_uuid);
 
-        Ok(Some(AuthenticatedIdentity::new(user_id)))
+        Ok(AuthenticationOutcome::Authenticated(
+            AuthenticatedIdentity::new(user_id),
+        ))
     }
 }
 

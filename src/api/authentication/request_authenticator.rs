@@ -7,8 +7,8 @@
 use async_trait::async_trait;
 use axum::http::request::Parts;
 
-use crate::application::authentication::AuthenticatedIdentity;
 use crate::application::error::AppError;
+use crate::application::platform::authentication::AuthenticatedIdentity;
 
 /// The result of attempting to authenticate an incoming request.
 #[derive(Debug, Clone)]
