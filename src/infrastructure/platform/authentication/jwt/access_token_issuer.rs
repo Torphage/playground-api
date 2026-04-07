@@ -3,21 +3,21 @@ use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::application::ports::{IssuedAccessToken, TokenGenerator};
+use crate::application::platform::authentication::ports::{AccessTokenIssuer, IssuedAccessToken};
 use crate::config::JwtConfig;
-use crate::domain::platform::::values::UserId;
+use crate::domain::platform::identity::values::UserId;
 
 use super::Claims;
 
-/// A concrete implementation of the `TokenGenerator` using HS256 JWTs.
-pub struct JwtProvider {
+/// A concrete implementation of the `JwtAccessTokenIssuer` using HS256 JWTs.
+pub struct JwtAccessTokenIssuer {
     encoding_key: EncodingKey,
     issuer: String,
     audience: String,
     access_ttl_seconds: i64,
 }
 
-impl JwtProvider {
+impl JwtAccessTokenIssuer {
     pub fn new(config: &JwtConfig) -> Self {
         Self {
             encoding_key: EncodingKey::from_secret(config.secret.as_bytes()),
@@ -28,8 +28,8 @@ impl JwtProvider {
     }
 }
 
-impl TokenGenerator for JwtProvider {
-    fn generate_token(&self, user_id: &UserId) -> Result<IssuedAccessToken, AppError> {
+impl AccessTokenIssuer for JwtAccessTokenIssuer {
+    fn issue_access_token(&self, user_id: &UserId) -> Result<IssuedAccessToken, AppError> {
         let now = Utc::now();
         let expiration = now + Duration::seconds(self.access_ttl_seconds);
 
