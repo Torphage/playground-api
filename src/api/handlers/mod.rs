@@ -1,1 +1,1 @@
-pub mod accounts;
+pub mod platform;

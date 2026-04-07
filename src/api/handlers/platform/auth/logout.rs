@@ -5,7 +5,7 @@ use axum_extra::extract::cookie::{Cookie, CookieJar};
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::logout::{LogoutCommand, LogoutHandler};
+use crate::application::platform::identity::commands::auth::logout::LogoutCommand;
 
 pub async fn handler(
     State(state): State<AppState>,
@@ -21,8 +21,7 @@ pub async fn handler(
         session_id: cookie.value().to_owned(),
     };
 
-    let logout = LogoutHandler::new(state.sessions.store.clone());
-    logout.handle(command).await?;
+    state.platform.handlers.auth.logout.handle(command).await?;
 
     let removal = Cookie::from(cookie_name.clone());
     let jar = jar.remove(removal);

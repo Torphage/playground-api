@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::rotate_refresh_token::RefreshTokenCommand;
+use crate::application::platform::identity::commands::auth::rotate_refresh_token::RefreshTokenCommand;
 
 #[derive(Debug, Deserialize)]
 pub struct RefreshTokenRequest {
@@ -35,10 +35,10 @@ pub async fn handler(
     let command = RefreshTokenCommand::from(payload);
 
     let tokens = state
-        .apps
-        .accounts
+        .platform
+        .handlers
         .auth
-        .refresh_token
+        .rotate_refresh_token
         .handle(command)
         .await?;
 

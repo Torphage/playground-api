@@ -6,7 +6,7 @@ use serde::Deserialize;
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::revoke_refresh_token::RevokeTokenCommand;
+use crate::application::platform::identity::commands::auth::revoke_refresh_token::RevokeTokenCommand;
 
 #[derive(Debug, Deserialize)]
 pub struct RevokeTokenRequest {
@@ -28,10 +28,10 @@ pub async fn handler(
     let command = RevokeTokenCommand::from(payload);
 
     state
-        .apps
-        .accounts
+        .platform
+        .handlers
         .auth
-        .revoke_token
+        .revoke_refresh_token
         .handle(command)
         .await?;
 

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::issue_access_token::IssueTokenCommand;
+use crate::application::platform::identity::commands::auth::issue_access_token::IssueTokenCommand;
 
 /// The expected JSON payload for token issuance.
 #[derive(Debug, Deserialize)]
@@ -39,7 +39,13 @@ pub async fn handler(
 ) -> Result<Json<TokenResponse>, ApiError> {
     let command = IssueTokenCommand::from(payload);
 
-    let tokens = state.apps.accounts.auth.issue_token.handle(command).await?;
+    let tokens = state
+        .platform
+        .handlers
+        .auth
+        .issue_access_token
+        .handle(command)
+        .await?;
 
     Ok(Json(TokenResponse {
         access_token: tokens.access_token,

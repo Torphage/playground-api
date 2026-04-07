@@ -1,7 +1,7 @@
 use crate::api::authentication::CurrentIdentity;
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::me::change_my_password::Command;
+use crate::application::platform::identity::commands::me::change_my_password::Command;
 use axum::http::StatusCode;
 use axum::{Json, extract::State};
 use serde::Deserialize;
@@ -29,8 +29,8 @@ pub async fn handler(
     let command = Command::from(payload);
 
     state
-        .apps
-        .accounts
+        .platform
+        .handlers
         .me
         .change_my_password
         .handle(current_identity.identity(), command)

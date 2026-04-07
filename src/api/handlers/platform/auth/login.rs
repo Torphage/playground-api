@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::error::ApiError;
 use crate::api::state::AppState;
-use crate::application::accounts::commands::auth::login::{LoginCommand, LoginHandler};
+use crate::application::platform::identity::commands::auth::login::LoginCommand;
 
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {
@@ -35,14 +35,7 @@ pub async fn handler(
 ) -> Result<(CookieJar, Json<LoginResponse>), ApiError> {
     let command = LoginCommand::from(payload);
 
-    let login = LoginHandler::new(
-        state.tx_manager.clone(),
-        state.repos.user.clone(),
-        state.crypto.password_hasher.clone(),
-        state.sessions.store.clone(),
-    );
-
-    let session = login.handle(command).await?;
+    let session = state.platform.handlers.auth.login.handle(command).await?;
 
     let cookie = Cookie::build((
         state.config.authentication.session.cookie_name.clone(),
