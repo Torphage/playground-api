@@ -17,11 +17,12 @@ use crate::application::platform::identity::commands::{
 };
 use crate::config::AppConfig;
 use crate::infrastructure::db::postgres::PostgresTransactionManager;
+use crate::infrastructure::platform::authentication::refresh_tokens::PostgresRefreshTokenStore;
 use crate::infrastructure::platform::authentication::session::FredSessionStore;
-use crate::infrastructure::platform::authorization::principals::CacheBackedPrincipalLoader;
-use crate::infrastructure::platform::identity::{
-    PostgresPrincipalLoader, PostgresRefreshTokenStore, PostgresUserRepository,
+use crate::infrastructure::platform::authorization::principals::{
+    CacheBackedPrincipalLoader, PostgresPrincipalLoader,
 };
+use crate::infrastructure::platform::identity::PostgresUserRepository;
 
 pub type RegisterHandler =
     register_user::RegisterHandler<PostgresTransactionManager, PostgresUserRepository>;

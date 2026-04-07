@@ -29,6 +29,7 @@ use crate::infrastructure::db::postgres::{
     PostgresTransactionManager, build_postgres_pool, run_postgres_migrations,
 };
 use crate::infrastructure::db::redis::{RedisClient, build_redis_client};
+use crate::infrastructure::platform::authentication::refresh_tokens::PostgresRefreshTokenStore;
 use crate::infrastructure::platform::authentication::session::{
     FredSessionStore, SessionRequestAuthenticator,
 };
@@ -39,11 +40,9 @@ use crate::infrastructure::platform::authentication::{
 };
 use crate::infrastructure::platform::authorization::permission_authorizer::PermissionAuthorizer;
 use crate::infrastructure::platform::authorization::principals::{
-    CacheBackedPrincipalLoader, RedisPrincipalCache,
+    CacheBackedPrincipalLoader, PostgresPrincipalLoader, RedisPrincipalCache,
 };
-use crate::infrastructure::platform::identity::{
-    PostgresPrincipalLoader, PostgresRefreshTokenStore, PostgresUserRepository,
-};
+use crate::infrastructure::platform::identity::PostgresUserRepository;
 
 type PrincipalLoader = CacheBackedPrincipalLoader<PostgresPrincipalLoader>;
 
