@@ -6,12 +6,13 @@ use chrono::{Duration, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
-use crate::application::platform::identity::commands::auth::IssuedTokens;
-use crate::application::ports::{
-    NewRefreshTokenRecord, RefreshTokenRepository, RefreshTokenService, TokenGenerator,
+use crate::application::platform::authentication::ports::{
+    AccessTokenIssuer, NewRefreshTokenRecord, RefreshTokenHasher, RefreshTokenIssuer,
+    RefreshTokenStore,
 };
+use crate::application::platform::identity::commands::auth::IssuedTokens;
 use crate::application::shared::transaction::{Transaction, TransactionManager};
-use crate::domain::platform::::ports::UserRepository;
+use crate::domain::platform::identity::ports::UserRepository;
 
 use super::RefreshTokenCommand;
 
@@ -19,9 +20,10 @@ use super::RefreshTokenCommand;
 pub struct RefreshTokenHandler<TM, UR, RTR> {
     tx_manager: TM,
     user_repo: Arc<UR>,
-    refresh_token_repo: Arc<RTR>,
-    token_generator: Arc<dyn TokenGenerator>,
-    refresh_token_service: Arc<dyn RefreshTokenService>,
+    access_token_issuer: Arc<dyn AccessTokenIssuer>,
+    refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
+    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    refresh_token_store: Arc<RTR>,
     refresh_ttl_seconds: i64,
 }
 
@@ -29,17 +31,19 @@ impl<TM, UR, RTR> RefreshTokenHandler<TM, UR, RTR> {
     pub fn new(
         tx_manager: TM,
         user_repo: Arc<UR>,
-        refresh_token_repo: Arc<RTR>,
-        token_generator: Arc<dyn TokenGenerator>,
-        refresh_token_service: Arc<dyn RefreshTokenService>,
+        access_token_issuer: Arc<dyn AccessTokenIssuer>,
+        refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
+        refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+        refresh_token_store: Arc<RTR>,
         refresh_ttl_seconds: i64,
     ) -> Self {
         Self {
             tx_manager,
             user_repo,
-            refresh_token_repo,
-            token_generator,
-            refresh_token_service,
+            access_token_issuer,
+            refresh_token_issuer,
+            refresh_token_hasher,
+            refresh_token_store,
             refresh_ttl_seconds,
         }
     }
@@ -49,19 +53,19 @@ impl<TM, UR, RTR> RefreshTokenHandler<TM, UR, RTR>
 where
     TM: TransactionManager,
     for<'tx> UR: UserRepository<TM::Tx<'tx>>,
-    for<'tx> RTR: RefreshTokenRepository<TM::Tx<'tx>>,
+    for<'tx> RTR: RefreshTokenStore<TM::Tx<'tx>>,
 {
     /// Rotates a refresh token and returns a new token pair.
     pub async fn handle(&self, command: RefreshTokenCommand) -> Result<IssuedTokens, AppError> {
         let token_hash = self
-            .refresh_token_service
-            .hash_token(&command.refresh_token)?;
+            .refresh_token_hasher
+            .hash_refresh_token(&command.refresh_token)?;
 
         let mut tx = self.tx_manager.begin().await?;
         let now = Utc::now();
 
         let Some(existing) = self
-            .refresh_token_repo
+            .refresh_token_store
             .find_by_token_hash(&mut tx, &token_hash)
             .await?
         else {
@@ -87,7 +91,7 @@ where
                 "Refresh token reuse detected; revoking family"
             );
 
-            self.refresh_token_repo
+            self.refresh_token_store
                 .revoke_family(&mut tx, existing.family_id, now)
                 .await?;
 
@@ -120,7 +124,7 @@ where
                     "Refresh token belongs to a user that no longer exists; revoking family"
                 );
 
-                self.refresh_token_repo
+                self.refresh_token_store
                     .revoke_family(&mut tx, existing.family_id, now)
                     .await?;
 
@@ -129,9 +133,11 @@ where
             }
         };
 
-        let access_token = self.token_generator.generate_token(&user.id)?;
-        let raw_refresh_token = self.refresh_token_service.generate_token()?;
-        let refresh_token_hash = self.refresh_token_service.hash_token(&raw_refresh_token)?;
+        let access_token = self.access_token_issuer.issue_access_token(&user.id)?;
+        let raw_refresh_token = self.refresh_token_issuer.issue_refresh_token()?;
+        let refresh_token_hash = self
+            .refresh_token_hasher
+            .hash_refresh_token(&raw_refresh_token)?;
         let replacement_id = Uuid::new_v4();
 
         let new_record = NewRefreshTokenRecord {
@@ -143,9 +149,11 @@ where
             expires_at: now + Duration::seconds(self.refresh_ttl_seconds),
         };
 
-        self.refresh_token_repo.insert(&mut tx, &new_record).await?;
+        self.refresh_token_store
+            .insert(&mut tx, &new_record)
+            .await?;
 
-        self.refresh_token_repo
+        self.refresh_token_store
             .mark_rotated(&mut tx, existing.id, replacement_id, now)
             .await?;
 

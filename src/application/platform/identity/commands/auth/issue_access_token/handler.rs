@@ -6,13 +6,14 @@ use chrono::{Duration, Utc};
 use uuid::Uuid;
 
 use crate::application::error::AppError;
+use crate::application::platform::authentication::ports::{
+    AccessTokenIssuer, NewRefreshTokenRecord, RefreshTokenHasher, RefreshTokenIssuer,
+    RefreshTokenStore,
+};
 use crate::application::platform::identity::commands::auth::IssuedTokens;
 use crate::application::platform::identity::commands::auth::issue_access_token::IssueTokenCommand;
-use crate::application::ports::{
-    NewRefreshTokenRecord, RefreshTokenRepository, RefreshTokenService, TokenGenerator,
-};
 use crate::application::shared::{Transaction, TransactionManager};
-use crate::domain::platform::::{
+use crate::domain::platform::identity::{
     AccountError,
     ports::{PasswordHasher, UserRepository},
     values::{Email, PlaintextPassword},
@@ -22,10 +23,11 @@ use crate::domain::platform::::{
 pub struct IssueTokenHandler<TM, UR, RTR> {
     tx_manager: TM,
     user_repo: Arc<UR>,
-    refresh_token_repo: Arc<RTR>,
     password_hasher: Arc<dyn PasswordHasher>,
-    token_generator: Arc<dyn TokenGenerator>,
-    refresh_token_service: Arc<dyn RefreshTokenService>,
+    access_token_issuer: Arc<dyn AccessTokenIssuer>,
+    refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
+    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    refresh_token_store: Arc<RTR>,
     refresh_ttl_seconds: i64,
 }
 
@@ -33,19 +35,21 @@ impl<TM, UR, RTR> IssueTokenHandler<TM, UR, RTR> {
     pub fn new(
         tx_manager: TM,
         user_repo: Arc<UR>,
-        refresh_token_repo: Arc<RTR>,
         password_hasher: Arc<dyn PasswordHasher>,
-        token_generator: Arc<dyn TokenGenerator>,
-        refresh_token_service: Arc<dyn RefreshTokenService>,
+        access_token_issuer: Arc<dyn AccessTokenIssuer>,
+        refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
+        refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+        refresh_token_store: Arc<RTR>,
         refresh_ttl_seconds: i64,
     ) -> Self {
         Self {
             tx_manager,
             user_repo,
-            refresh_token_repo,
             password_hasher,
-            token_generator,
-            refresh_token_service,
+            access_token_issuer,
+            refresh_token_issuer,
+            refresh_token_hasher,
+            refresh_token_store,
             refresh_ttl_seconds,
         }
     }
@@ -55,7 +59,7 @@ impl<TM, UR, RTR> IssueTokenHandler<TM, UR, RTR>
 where
     TM: TransactionManager,
     for<'tx> UR: UserRepository<TM::Tx<'tx>>,
-    for<'tx> RTR: RefreshTokenRepository<TM::Tx<'tx>>,
+    for<'tx> RTR: RefreshTokenStore<TM::Tx<'tx>>,
 {
     /// Verifies credentials and issues an access token plus a refresh token.
     pub async fn handle(&self, command: IssueTokenCommand) -> Result<IssuedTokens, AppError> {
@@ -84,9 +88,11 @@ where
         }
 
         let now = Utc::now();
-        let access_token = self.token_generator.generate_token(&user.id)?;
-        let raw_refresh_token = self.refresh_token_service.generate_token()?;
-        let refresh_token_hash = self.refresh_token_service.hash_token(&raw_refresh_token)?;
+        let access_token = self.access_token_issuer.issue_access_token(&user.id)?;
+        let raw_refresh_token = self.refresh_token_issuer.issue_refresh_token()?;
+        let refresh_token_hash = self
+            .refresh_token_hasher
+            .hash_refresh_token(&raw_refresh_token)?;
 
         let refresh_record = NewRefreshTokenRecord {
             id: Uuid::new_v4(),
@@ -97,7 +103,7 @@ where
             expires_at: now + Duration::seconds(self.refresh_ttl_seconds),
         };
 
-        self.refresh_token_repo
+        self.refresh_token_store
             .insert(&mut tx, &refresh_record)
             .await?;
 
