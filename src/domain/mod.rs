@@ -1,2 +1,2 @@
-pub mod shared;
 pub mod platform;
+pub mod shared;
