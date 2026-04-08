@@ -24,7 +24,9 @@ use crate::application::platform::authorization::Authorizer;
 use crate::application::platform::identity::commands::auth::{login, logout, register_user};
 use crate::config::AppConfig;
 use crate::domain::platform::identity::PasswordHasher;
-use crate::infrastructure::crypto::Argon2Provider;
+use crate::infrastructure::crypto::opaque_token_hashers::Sha256OpaqueTokenHasher;
+use crate::infrastructure::crypto::opaque_token_issuers::RandomOpaqueTokenIssuer;
+use crate::infrastructure::crypto::password_hashers::Argon2PasswordHasher;
 use crate::infrastructure::db::postgres::{
     PostgresTransactionManager, build_postgres_pool, run_postgres_migrations,
 };
@@ -227,7 +229,7 @@ fn build_shared_components(
     let user_repo = Arc::new(PostgresUserRepository::new());
     let refresh_token_store = Arc::new(PostgresRefreshTokenStore::new());
 
-    let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2Provider::new());
+    let password_hasher: Arc<dyn PasswordHasher> = Arc::new(Argon2PasswordHasher::new());
     let authorizer: Arc<dyn Authorizer> = Arc::new(PermissionAuthorizer::new());
 
     let access_token_issuer: Arc<dyn AccessTokenIssuer> =

@@ -25,9 +25,9 @@ use crate::domain::platform::identity::{
 /// Competition. This struct requires no state and can be cheaply cloned or
 /// shared across multiple threads.
 #[derive(Clone, Default)]
-pub struct Argon2Provider;
+pub struct Argon2PasswordHasher;
 
-impl Argon2Provider {
+impl Argon2PasswordHasher {
     /// Creates a new instance of the Argon2 hasher using default parameters.
     pub fn new() -> Self {
         Self
@@ -35,7 +35,7 @@ impl Argon2Provider {
 }
 
 #[async_trait]
-impl PasswordHasher for Argon2Provider {
+impl PasswordHasher for Argon2PasswordHasher {
     /// Hashes a plaintext password securely using a randomly generated salt.
     async fn hash(&self, password: &PlaintextPassword) -> Result<PasswordHash, AccountError> {
         // We must extract the string to move it across the thread boundary
