@@ -68,6 +68,8 @@ sentry-tower = { version = "0.47", features = ["http"] }
 # argon2: Password hashing implementation.
 # jsonwebtoken: JWT encoding and decoding.
 argon2 = { version = "0.5", features = ["std"] }
+blake3 = "1.8.4"
+bcrypt = "0.19.0"
 jsonwebtoken = "10.2"
 
 # --- Error Handling ---
