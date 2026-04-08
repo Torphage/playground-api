@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::application::error::AppError;
 use crate::application::platform::authentication::ports::{
-    AccessTokenIssuer, NewRefreshTokenRecord, RefreshTokenHasher, RefreshTokenIssuer,
+    AccessTokenIssuer, NewRefreshTokenRecord, OpaqueTokenHasher, OpaqueTokenIssuer,
     RefreshTokenStore,
 };
 use crate::application::platform::identity::commands::auth::IssuedTokens;
@@ -25,8 +25,8 @@ pub struct IssueTokenHandler<TM, UR, RTR> {
     user_repo: Arc<UR>,
     password_hasher: Arc<dyn PasswordHasher>,
     access_token_issuer: Arc<dyn AccessTokenIssuer>,
-    refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
-    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    refresh_token_issuer: Arc<dyn OpaqueTokenIssuer>,
+    refresh_token_hasher: Arc<dyn OpaqueTokenHasher>,
     refresh_token_store: Arc<RTR>,
     refresh_ttl_seconds: i64,
 }
@@ -37,8 +37,8 @@ impl<TM, UR, RTR> IssueTokenHandler<TM, UR, RTR> {
         user_repo: Arc<UR>,
         password_hasher: Arc<dyn PasswordHasher>,
         access_token_issuer: Arc<dyn AccessTokenIssuer>,
-        refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
-        refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+        refresh_token_issuer: Arc<dyn OpaqueTokenIssuer>,
+        refresh_token_hasher: Arc<dyn OpaqueTokenHasher>,
         refresh_token_store: Arc<RTR>,
         refresh_ttl_seconds: i64,
     ) -> Self {
@@ -89,10 +89,8 @@ where
 
         let now = Utc::now();
         let access_token = self.access_token_issuer.issue_access_token(&user.id)?;
-        let raw_refresh_token = self.refresh_token_issuer.issue_refresh_token()?;
-        let refresh_token_hash = self
-            .refresh_token_hasher
-            .hash_refresh_token(&raw_refresh_token)?;
+        let raw_refresh_token = self.refresh_token_issuer.issue_token()?;
+        let refresh_token_hash = self.refresh_token_hasher.hash_token(&raw_refresh_token)?;
 
         let refresh_record = NewRefreshTokenRecord {
             id: Uuid::new_v4(),

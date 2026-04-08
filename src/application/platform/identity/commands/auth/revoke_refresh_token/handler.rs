@@ -5,7 +5,7 @@ use std::sync::Arc;
 use chrono::Utc;
 
 use crate::application::error::AppError;
-use crate::application::platform::authentication::ports::{RefreshTokenHasher, RefreshTokenStore};
+use crate::application::platform::authentication::ports::{OpaqueTokenHasher, RefreshTokenStore};
 use crate::application::shared::{Transaction, TransactionManager};
 
 use super::RevokeTokenCommand;
@@ -13,14 +13,14 @@ use super::RevokeTokenCommand;
 /// Revokes the refresh-token family associated with the supplied refresh token.
 pub struct RevokeTokenHandler<TM, RTR> {
     tx_manager: TM,
-    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    refresh_token_hasher: Arc<dyn OpaqueTokenHasher>,
     refresh_token_store: Arc<RTR>,
 }
 
 impl<TM, RTR> RevokeTokenHandler<TM, RTR> {
     pub fn new(
         tx_manager: TM,
-        refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+        refresh_token_hasher: Arc<dyn OpaqueTokenHasher>,
         refresh_token_store: Arc<RTR>,
     ) -> Self {
         Self {
@@ -42,7 +42,7 @@ where
     pub async fn handle(&self, command: RevokeTokenCommand) -> Result<(), AppError> {
         let token_hash = self
             .refresh_token_hasher
-            .hash_refresh_token(&command.refresh_token)?;
+            .hash_token(&command.refresh_token)?;
 
         let mut tx = self.tx_manager.begin().await?;
 
