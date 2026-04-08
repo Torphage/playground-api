@@ -18,7 +18,7 @@ use crate::api::state::{
     RevokeRefreshTokenHandler, RotateRefreshTokenHandler, Sessions,
 };
 use crate::application::platform::authentication::ports::{
-    AccessTokenIssuer, RefreshTokenHasher, RefreshTokenIssuer,
+    AccessTokenIssuer, OpaqueTokenHasher, OpaqueTokenIssuer,
 };
 use crate::application::platform::authorization::Authorizer;
 use crate::application::platform::identity::commands::auth::{login, logout, register_user};
@@ -33,7 +33,6 @@ use crate::infrastructure::platform::authentication::refresh_tokens::PostgresRef
 use crate::infrastructure::platform::authentication::session::{
     FredSessionStore, SessionRequestAuthenticator,
 };
-use crate::infrastructure::platform::authentication::sha256_refresh_token_codec::Sha256RefreshTokenCodec;
 use crate::infrastructure::platform::authentication::{
     CompositeRequestAuthenticator,
     jwt::{JwtAccessTokenIssuer, JwtRequestAuthenticator, JwtVerifier},
@@ -87,8 +86,8 @@ struct SharedComponents {
     principal_loader: Arc<PrincipalLoader>,
     user_repo: Arc<PostgresUserRepository>,
     access_token_issuer: Arc<dyn AccessTokenIssuer>,
-    refresh_token_issuer: Arc<dyn RefreshTokenIssuer>,
-    refresh_token_hasher: Arc<dyn RefreshTokenHasher>,
+    opaque_token_issuer: Arc<dyn OpaqueTokenIssuer>,
+    opaque_token_hasher: Arc<dyn OpaqueTokenHasher>,
     refresh_token_store: Arc<PostgresRefreshTokenStore>,
     session_store: Arc<FredSessionStore>,
 }
@@ -234,9 +233,8 @@ fn build_shared_components(
     let access_token_issuer: Arc<dyn AccessTokenIssuer> =
         Arc::new(JwtAccessTokenIssuer::new(&config.authentication.jwt));
 
-    let refresh_token_codec = Arc::new(Sha256RefreshTokenCodec::new());
-    let refresh_token_issuer: Arc<dyn RefreshTokenIssuer> = refresh_token_codec.clone();
-    let refresh_token_hasher: Arc<dyn RefreshTokenHasher> = refresh_token_codec.clone();
+    let opaque_token_issuer: Arc<dyn OpaqueTokenIssuer> = Arc::new(RandomOpaqueTokenIssuer::new());
+    let opaque_token_hasher: Arc<dyn OpaqueTokenHasher> = Arc::new(Sha256OpaqueTokenHasher::new());
 
     SharedComponents {
         tx_manager,
@@ -245,8 +243,8 @@ fn build_shared_components(
         principal_loader,
         user_repo,
         access_token_issuer,
-        refresh_token_issuer,
-        refresh_token_hasher,
+        opaque_token_issuer,
+        opaque_token_hasher,
         refresh_token_store,
         session_store,
     }
@@ -284,8 +282,8 @@ fn build_platform_auth_handlers(
         shared.user_repo.clone(),
         shared.password_hasher.clone(),
         shared.access_token_issuer.clone(),
-        shared.refresh_token_issuer.clone(),
-        shared.refresh_token_hasher.clone(),
+        shared.opaque_token_issuer.clone(),
+        shared.opaque_token_hasher.clone(),
         shared.refresh_token_store.clone(),
         config.authentication.jwt.refresh_ttl_seconds,
     ));
@@ -294,15 +292,15 @@ fn build_platform_auth_handlers(
         shared.tx_manager.clone(),
         shared.user_repo.clone(),
         shared.access_token_issuer.clone(),
-        shared.refresh_token_issuer.clone(),
-        shared.refresh_token_hasher.clone(),
+        shared.opaque_token_issuer.clone(),
+        shared.opaque_token_hasher.clone(),
         shared.refresh_token_store.clone(),
         config.authentication.jwt.refresh_ttl_seconds,
     ));
 
     let revoke_refresh_token = Arc::new(RevokeRefreshTokenHandler::new(
         shared.tx_manager.clone(),
-        shared.refresh_token_hasher.clone(),
+        shared.opaque_token_hasher.clone(),
         shared.refresh_token_store.clone(),
     ));
 
