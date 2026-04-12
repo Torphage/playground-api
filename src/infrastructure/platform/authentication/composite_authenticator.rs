@@ -1,15 +1,16 @@
-//! Composite request authenticator.
+//! Composite authenticator.
 //!
-//! Tries multiple request authenticators in order and returns the first
-//! successful authenticated identity.
+//! Tries multiple authenticators in order and returns the first successful
+//! authenticated identity.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use axum::http::request::Parts;
 
-use crate::api::authentication::{AuthenticationOutcome, RequestAuthenticator};
 use crate::application::error::AppError;
+use crate::application::platform::authentication::{
+    AuthenticationContext, AuthenticationOutcome, Authenticator,
+};
 
 /// Tries several authentication methods in sequence.
 ///
@@ -18,13 +19,13 @@ use crate::application::error::AppError;
 /// - `NotPresent` falls through to the next authenticator.
 /// - Any error stops the chain immediately.
 #[derive(Clone, Default)]
-pub struct CompositeRequestAuthenticator {
-    authenticators: Vec<Arc<dyn RequestAuthenticator>>,
+pub struct CompositeAuthenticator {
+    authenticators: Vec<Arc<dyn Authenticator>>,
 }
 
-impl CompositeRequestAuthenticator {
-    /// Creates an empty composite authenticator.
-    pub fn new(authenticators: Vec<Arc<dyn RequestAuthenticator>>) -> Self {
+impl CompositeAuthenticator {
+    /// Creates a composite authenticator.
+    pub fn new(authenticators: Vec<Arc<dyn Authenticator>>) -> Self {
         Self { authenticators }
     }
 
@@ -35,10 +36,13 @@ impl CompositeRequestAuthenticator {
 }
 
 #[async_trait]
-impl RequestAuthenticator for CompositeRequestAuthenticator {
-    async fn authenticate(&self, parts: &Parts) -> Result<AuthenticationOutcome, AppError> {
+impl Authenticator for CompositeAuthenticator {
+    async fn authenticate(
+        &self,
+        context: &AuthenticationContext,
+    ) -> Result<AuthenticationOutcome, AppError> {
         for authenticator in &self.authenticators {
-            match authenticator.authenticate(parts).await? {
+            match authenticator.authenticate(context).await? {
                 AuthenticationOutcome::Authenticated(identity) => {
                     return Ok(AuthenticationOutcome::Authenticated(identity));
                 }
