@@ -27,11 +27,11 @@ use crate::infrastructure::db::postgres::{
 use crate::infrastructure::db::redis::{RedisClient, build_redis_client};
 use crate::infrastructure::platform::authentication::refresh_tokens::PostgresRefreshTokenStore;
 use crate::infrastructure::platform::authentication::session::{
-    FredSessionStore, SessionRequestAuthenticator,
+    FredSessionStore, SessionAuthenticator,
 };
 use crate::infrastructure::platform::authentication::{
-    CompositeRequestAuthenticator,
-    jwt::{JwtAccessTokenIssuer, JwtRequestAuthenticator, JwtVerifier},
+    CompositeAuthenticator,
+    jwt::{JwtAccessTokenIssuer, JwtBearerAuthenticator, JwtVerifier},
 };
 use crate::infrastructure::platform::authorization::permission_authorizer::PermissionAuthorizer;
 use crate::infrastructure::platform::authorization::principals::{
@@ -187,20 +187,18 @@ fn build_authentication(
     session_store: Arc<FredSessionStore>,
 ) -> Authentication {
     let jwt_verifier = JwtVerifier::new(&config.authentication.jwt);
-    let jwt_request_authenticator = Arc::new(JwtRequestAuthenticator::new(jwt_verifier));
+    let jwt_request_authenticator = Arc::new(JwtBearerAuthenticator::new(jwt_verifier));
 
-    let session_request_authenticator = Arc::new(SessionRequestAuthenticator::new(
-        session_store,
-        config.authentication.session.cookie_name.clone(),
-    ));
+    let session_request_authenticator = Arc::new(SessionAuthenticator::new(session_store));
 
-    let request_authenticator = CompositeRequestAuthenticator::new(vec![
+    let request_authenticator = CompositeAuthenticator::new(vec![
         jwt_request_authenticator,
         session_request_authenticator,
     ]);
 
     Authentication {
-        request_authenticator: Arc::new(request_authenticator),
+        authenticator: Arc::new(request_authenticator),
+        session_cookie_name: config.authentication.session.cookie_name.clone(),
     }
 }
 
