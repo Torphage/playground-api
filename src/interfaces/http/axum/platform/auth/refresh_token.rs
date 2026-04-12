@@ -3,9 +3,9 @@
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::rotate_refresh_token::RefreshTokenCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct RefreshTokenRequest {

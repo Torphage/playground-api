@@ -4,9 +4,9 @@ use axum::{Json, extract::State};
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use serde::{Deserialize, Serialize};
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::login::LoginCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct LoginRequest {

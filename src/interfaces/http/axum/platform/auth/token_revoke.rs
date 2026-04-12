@@ -4,9 +4,9 @@ use axum::http::StatusCode;
 use axum::{Json, extract::State};
 use serde::Deserialize;
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::revoke_refresh_token::RevokeTokenCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct RevokeTokenRequest {

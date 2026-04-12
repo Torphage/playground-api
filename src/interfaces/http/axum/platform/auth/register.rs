@@ -8,9 +8,9 @@ use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::register_user::RegisterCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 /// The expected JSON payload for a registration request.
 #[derive(Deserialize)]

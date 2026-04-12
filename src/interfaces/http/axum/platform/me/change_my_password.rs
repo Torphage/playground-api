@@ -1,7 +1,7 @@
-use crate::api::authentication::CurrentIdentity;
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::me::change_my_password::Command;
+use crate::interfaces::http::axum::authentication::CurrentIdentity;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 use axum::http::StatusCode;
 use axum::{Json, extract::State};
 use serde::Deserialize;

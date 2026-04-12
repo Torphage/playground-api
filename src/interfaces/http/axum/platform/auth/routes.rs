@@ -2,7 +2,7 @@ use axum::Router;
 use axum::routing::post;
 
 use super::{login, logout, refresh_token, register, token, token_revoke};
-use crate::api::state::AppState;
+use crate::interfaces::http::axum::state::AppState;
 
 pub fn routes() -> Router<AppState> {
     Router::new()

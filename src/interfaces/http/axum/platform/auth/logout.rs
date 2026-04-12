@@ -3,9 +3,9 @@
 use axum::{extract::State, http::StatusCode};
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::logout::LogoutCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 pub async fn handler(
     State(state): State<AppState>,

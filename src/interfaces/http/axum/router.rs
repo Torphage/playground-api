@@ -3,9 +3,8 @@ use axum::http::{HeaderValue, Method};
 use sentry_tower::NewSentryLayer;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
-use crate::api::handlers;
-use crate::api::state::AppState;
 use crate::config::CorsConfig;
+use crate::interfaces::http::axum::{platform, state::AppState};
 
 pub fn create_router(state: AppState, cors_settings: CorsConfig) -> Router {
     // Construct the Layer
@@ -31,7 +30,7 @@ pub fn create_router(state: AppState, cors_settings: CorsConfig) -> Router {
 
     // Apply to Router
     Router::new()
-        .nest("/", handlers::platform::routes::routes())
+        .nest("/", platform::routes::routes())
         .with_state(state)
         .layer(cors)
         .layer(NewSentryLayer::new_from_top())

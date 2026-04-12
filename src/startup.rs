@@ -11,12 +11,6 @@ use std::time::Duration;
 use axum::Router;
 use tokio::net::TcpListener;
 
-use crate::api::router;
-use crate::api::state::{
-    AppState, AppsState, Authentication, ChangeMyPasswordHandler, IssueAccessTokenHandler,
-    PlatformAuthHandlers, PlatformHandlers, PlatformMeHandlers, PlatformState,
-    RevokeRefreshTokenHandler, RotateRefreshTokenHandler, Sessions,
-};
 use crate::application::platform::authentication::ports::{
     AccessTokenIssuer, OpaqueTokenHasher, OpaqueTokenIssuer,
 };
@@ -44,6 +38,12 @@ use crate::infrastructure::platform::authorization::principals::{
     CacheBackedPrincipalLoader, PostgresPrincipalLoader, RedisPrincipalCache,
 };
 use crate::infrastructure::platform::identity::PostgresUserRepository;
+use crate::interfaces::http::axum::router;
+use crate::interfaces::http::axum::state::{
+    AppState, AppsState, Authentication, ChangeMyPasswordHandler, IssueAccessTokenHandler,
+    PlatformAuthHandlers, PlatformHandlers, PlatformMeHandlers, PlatformState,
+    RevokeRefreshTokenHandler, RotateRefreshTokenHandler, Sessions,
+};
 
 type PrincipalLoader = CacheBackedPrincipalLoader<PostgresPrincipalLoader>;
 

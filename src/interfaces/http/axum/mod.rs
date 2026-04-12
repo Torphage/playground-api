@@ -1,6 +1,6 @@
 pub mod authentication;
 mod error;
-mod handlers;
+mod platform;
 pub mod router;
 pub mod state;
 

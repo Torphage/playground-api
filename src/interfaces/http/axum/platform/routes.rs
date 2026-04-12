@@ -1,7 +1,9 @@
 use axum::Router;
 
-use super::{auth, me, users};
-use crate::api::state::AppState;
+use crate::interfaces::http::axum::{
+    platform::{auth, me, users},
+    state::AppState,
+};
 
 pub fn routes() -> Router<AppState> {
     Router::new()

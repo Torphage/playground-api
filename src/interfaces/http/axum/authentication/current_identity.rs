@@ -5,12 +5,12 @@ use std::sync::Arc;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::error::AppError;
 use crate::application::platform::authentication::AuthenticatedIdentity;
-
-use crate::api::authentication::{AuthenticationOutcome, RequestAuthenticator};
+use crate::interfaces::http::axum::{error::ApiError, state::AppState};
+use crate::interfaces::http::shared::authentication::{
+    AuthenticationOutcome, RequestAuthenticator,
+};
 
 /// Authentication-specific state extracted from the full app state.
 #[derive(Clone)]

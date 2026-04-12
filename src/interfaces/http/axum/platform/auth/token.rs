@@ -3,9 +3,9 @@
 use axum::{Json, extract::State};
 use serde::{Deserialize, Serialize};
 
-use crate::api::error::ApiError;
-use crate::api::state::AppState;
 use crate::application::platform::identity::commands::auth::issue_access_token::IssueTokenCommand;
+use crate::interfaces::http::axum::error::ApiError;
+use crate::interfaces::http::axum::state::AppState;
 
 /// The expected JSON payload for token issuance.
 #[derive(Debug, Deserialize)]

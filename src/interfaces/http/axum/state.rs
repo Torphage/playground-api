@@ -8,7 +8,6 @@ use std::sync::Arc;
 
 use axum::extract::FromRef;
 
-use crate::api::authentication::RequestAuthenticator;
 use crate::application::platform::identity::commands::auth::logout::LogoutHandler;
 use crate::application::platform::identity::commands::auth::{login, register_user};
 use crate::application::platform::identity::commands::{
@@ -23,6 +22,7 @@ use crate::infrastructure::platform::authorization::principals::{
     CacheBackedPrincipalLoader, PostgresPrincipalLoader,
 };
 use crate::infrastructure::platform::identity::PostgresUserRepository;
+use crate::interfaces::http::shared::authentication::RequestAuthenticator;
 
 pub type RegisterHandler =
     register_user::RegisterHandler<PostgresTransactionManager, PostgresUserRepository>;
