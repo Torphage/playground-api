@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use axum::extract::FromRef;
 
+use crate::application::platform::authentication::Authenticator;
 use crate::application::platform::identity::commands::auth::logout::LogoutHandler;
 use crate::application::platform::identity::commands::auth::{login, register_user};
 use crate::application::platform::identity::commands::{
@@ -22,7 +23,6 @@ use crate::infrastructure::platform::authorization::principals::{
     CacheBackedPrincipalLoader, PostgresPrincipalLoader,
 };
 use crate::infrastructure::platform::identity::PostgresUserRepository;
-use crate::interfaces::http::shared::authentication::RequestAuthenticator;
 
 pub type RegisterHandler =
     register_user::RegisterHandler<PostgresTransactionManager, PostgresUserRepository>;
@@ -58,7 +58,10 @@ pub type RevokeRefreshTokenHandler =
 #[derive(Clone)]
 pub struct Authentication {
     /// Mechanism-neutral request authenticator.
-    pub request_authenticator: Arc<dyn RequestAuthenticator>,
+    pub authenticator: Arc<dyn Authenticator>,
+
+    /// Name of the session cookie.
+    pub session_cookie_name: String,
 }
 
 /// Session infrastructure exposed to handlers/use cases.

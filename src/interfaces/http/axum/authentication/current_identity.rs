@@ -3,25 +3,27 @@
 use std::sync::Arc;
 
 use axum::extract::{FromRef, FromRequestParts};
-use axum::http::request::Parts;
+use http::request::Parts;
 
 use crate::application::error::AppError;
-use crate::application::platform::authentication::AuthenticatedIdentity;
-use crate::interfaces::http::axum::{error::ApiError, state::AppState};
-use crate::interfaces::http::shared::authentication::{
-    AuthenticationOutcome, RequestAuthenticator,
+use crate::application::platform::authentication::{
+    AuthenticatedIdentity, AuthenticationOutcome, Authenticator,
 };
+use crate::interfaces::http::axum::{error::ApiError, state::AppState};
+use crate::interfaces::http::shared::authentication::authentication_context_from_request_parts;
 
 /// Authentication-specific state extracted from the full app state.
 #[derive(Clone)]
 struct AuthenticationState {
-    request_authenticator: Arc<dyn RequestAuthenticator>,
+    authenticator: Arc<dyn Authenticator>,
+    session_cookie_name: String,
 }
 
 impl FromRef<AppState> for AuthenticationState {
     fn from_ref(state: &AppState) -> Self {
         Self {
-            request_authenticator: state.platform.authentication.request_authenticator.clone(),
+            authenticator: state.platform.authentication.authenticator.clone(),
+            session_cookie_name: state.platform.authentication.session_cookie_name.clone(),
         }
     }
 }
@@ -52,7 +54,10 @@ where
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let auth_state = AuthenticationState::from_ref(state);
 
-        let identity = match auth_state.request_authenticator.authenticate(parts).await? {
+        let context =
+            authentication_context_from_request_parts(parts, &auth_state.session_cookie_name)?;
+
+        let identity = match auth_state.authenticator.authenticate(&context).await? {
             AuthenticationOutcome::Authenticated(identity) => identity,
             AuthenticationOutcome::NotPresent => {
                 return Err(ApiError(AppError::Authentication(

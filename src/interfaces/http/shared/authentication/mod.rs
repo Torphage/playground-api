@@ -1,3 +1,3 @@
-pub mod request_authenticator;
+pub mod authentication_context_from_request_parts;
 
-pub use request_authenticator::{AuthenticationOutcome, RequestAuthenticator};
+pub use authentication_context_from_request_parts::authentication_context_from_request_parts;
